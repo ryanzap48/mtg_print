@@ -37,10 +37,15 @@ export function displayImage(card: ScryfallCard, face: Face = 'front'): string |
   return u?.normal ?? u?.large ?? u?.png
 }
 
-/** Art for the small search-result pickers, which render around 64px wide. */
-export function thumbImage(card: ScryfallCard): string | undefined {
+/**
+ * Art for the search-result pickers, which render up to 256px wide.
+ *
+ * `large` is 672px, so it still has pixels in hand on a 2x or 3x display. `small` is only
+ * 146px and was being upscaled at these sizes, which is what made the pickers look blurry.
+ */
+export function pickerImage(card: ScryfallCard): string | undefined {
   const u = faceUris(card, 'front')
-  return u?.small ?? u?.normal ?? u?.png
+  return u?.large ?? u?.normal ?? u?.png
 }
 
 /**

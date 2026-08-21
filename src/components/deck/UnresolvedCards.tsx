@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { DeckEntry } from '../../lib/deck/parseDeck'
 import type { ScryfallCard } from '../../lib/scryfall/types'
 import { searchByName } from '../../lib/scryfall/client'
-import { thumbImage } from '../../lib/deck/slots'
+import { pickerImage } from '../../lib/deck/slots'
 import { versionLabel } from './VersionPicker'
 
 interface Props {
@@ -62,17 +62,22 @@ function UnresolvedRow({
 }) {
   const [results, setResults] = useState<ScryfallCard[] | null>(null)
   const [searching, setSearching] = useState(false)
+  const [expanded, setExpanded] = useState(true)
+  const listId = useId()
 
   async function search() {
     setSearching(true)
     try {
       setResults(await searchByName(name))
+      setExpanded(true)
     } catch {
       setResults([])
     } finally {
       setSearching(false)
     }
   }
+
+  const matches = results?.length ?? 0
 
   return (
     <li>
@@ -84,8 +89,23 @@ function UnresolvedRow({
           onClick={search}
           disabled={searching}
         >
-          {searching ? 'Searching…' : 'Find by name'}
+          {searching ? 'Searching…' : results ? 'Search again' : 'Find by name'}
         </button>
+
+        {/* Results are large on purpose, so a row of them pushes the deck a long way down.
+            Once they are on screen, offer a way to fold them back up. */}
+        {matches > 0 && (
+          <button
+            type="button"
+            className="text-xs underline underline-offset-2 hover:opacity-60"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            aria-controls={listId}
+          >
+            {expanded ? `Hide ${matches} match${matches === 1 ? '' : 'es'}` : `Show ${matches} match${matches === 1 ? '' : 'es'}`}
+          </button>
+        )}
+
         <button
           type="button"
           className="text-xs underline underline-offset-2 hover:opacity-60"
@@ -99,17 +119,17 @@ function UnresolvedRow({
         <p className="mt-1 text-xs opacity-70">No cards found for “{name}”.</p>
       )}
 
-      {results && results.length > 0 && (
-        <ul className="mt-3 flex gap-3 overflow-x-auto pb-2">
+      {results && results.length > 0 && expanded && (
+        <ul id={listId} className="mt-3 flex gap-3 overflow-x-auto pb-2">
           {results.slice(0, 24).map((card) => {
-            const src = thumbImage(card)
+            const src = pickerImage(card)
             return (
               <li key={card.id} className="shrink-0">
                 <button
                   type="button"
                   onClick={() => onResolve(card)}
                   title={versionLabel(card)}
-                  className="block w-36 overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-2 hover:ring-current sm:w-52"
+                  className="block w-44 overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-2 hover:ring-current sm:w-64"
                   style={{ aspectRatio: 'var(--aspect-card)' }}
                 >
                   {src && (
