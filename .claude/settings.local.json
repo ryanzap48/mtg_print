@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(node -e 'const p=require\\(\"./package.json\"\\);console.log\\(\"engines:\",JSON.stringify\\(p.engines||null\\),\"\\\\nscripts:\",JSON.stringify\\(p.scripts\\)\\)')"
+    ]
+  }
+}

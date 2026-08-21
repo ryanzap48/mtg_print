@@ -1,5 +1,14 @@
-import { CARDS_PER_SHEET } from './geometry'
-import type { PrintSlot, ScryfallCard } from './types'
+import { CARDS_PER_SHEET } from '../print/geometry'
+import type { ScryfallCard } from '../scryfall/types'
+
+/** One physical thing to print: a single face of a single copy of a card. */
+export interface PrintSlot {
+  id: string
+  entryKey: string
+  name: string
+  imageUrl: string
+  face: 'front' | 'back'
+}
 
 /**
  * A card has a genuinely separate printed back only when its second face carries its own

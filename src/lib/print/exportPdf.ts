@@ -1,5 +1,5 @@
 import type { PrintOptions } from './types'
-import type { GenerateRequest, WorkerMessage, WorkerSlot } from '../workers/pdf.worker'
+import type { GenerateRequest, WorkerMessage, WorkerSlot } from '../../workers/pdf.worker'
 
 export interface PdfProgress {
   phase: 'download' | 'embed' | 'draw'
@@ -26,7 +26,7 @@ export function generatePdf(
   options: PrintOptions,
   onProgress?: (p: PdfProgress) => void,
 ): { promise: Promise<Blob>; cancel: () => void } {
-  const worker = new Worker(new URL('../workers/pdf.worker.ts', import.meta.url), {
+  const worker = new Worker(new URL('../../workers/pdf.worker.ts', import.meta.url), {
     type: 'module',
   })
 

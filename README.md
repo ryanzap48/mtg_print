@@ -1,4 +1,4 @@
-# MTG Print
+# MTG Print Proxy
 
 A mock of [mtgprint.net](https://mtgprint.net). Paste a Magic decklist, pick the printing you want
 for each card, and download a PDF laid out 9 to a page at **true card size — 63 × 88 mm**.
@@ -7,7 +7,83 @@ for each card, and download a PDF laid out 9 to a page at **true card size — 6
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # static site in dist/
+npm run preview  # serve the built output
 ```
+
+A single-page app with real client-side routes: `/`, `/about`, `/privacy`, `/terms`, `/legal`.
+
+Because those are routes rather than files, the host must serve `index.html` for any unknown
+path. Both configs are committed: `vercel.json` (Vercel) and `public/_redirects`
+(Netlify / Cloudflare Pages / Render static sites). Without one of them, deep links 404.
+
+Build output is foldered and named: `assets/js/vendor-react-<hash>.js`,
+`assets/css/index-<hash>.css`, and so on. The `<hash>` is deliberate — it is what lets these
+files be cached indefinitely while still updating the instant their contents change.
+
+## SEO: robots.txt and sitemap.xml
+
+Both are **generated at build time** into `dist/`, from `site-routes.json` — the same file the
+nav is built from, so the sitemap can never list a page that no longer exists. Set your domain:
+
+```
+SITE_URL=https://your-real-domain.com
+```
+
+in `.env` (or your host's environment variables — a real env var overrides `.env`). Then:
+
+```bash
+npm run build
+#   ✓ dist/sitemap.xml  5 URLs, lastmod 2026-08-19
+#   ✓ dist/robots.txt
+#   → Submit to Google Search Console: https://your-real-domain.com/sitemap.xml
+```
+
+If `SITE_URL` is unset or still the placeholder, the build prints a warning and writes neither
+file — a sitemap full of `your-domain.com` URLs is worse than no sitemap. A malformed value
+fails the build.
+
+To add a page, add it to `site-routes.json` and `src/App.tsx`; it appears in the nav, the footer,
+and the sitemap automatically.
+
+## Analytics (optional, off by default)
+
+Copy `.env.example` to `.env` and set your GA4 measurement ID:
+
+```
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```
+
+With no ID set, no consent banner appears and no Google script is ever loaded. With an ID set,
+`gtag.js` is fetched **only after the visitor clicks Accept** — declining means no Google request
+and no cookie, ever. Consent Mode v2 defaults are `denied`, advertising signals
+(`ad_storage`, `ad_user_data`, `ad_personalization`) stay denied permanently, and the choice is
+stored in `localStorage` under `mtg-print:consent`. Visitors can change it via **Cookie settings**
+in the footer.
+
+### One GA4 setting you must change
+
+GA4's Enhanced Measurement includes **"Page changes based on browser history events"**, which
+emits its own `page_view` on every client-side navigation. The app already sends one per route,
+so leaving it on double-counts every page except the landing page (measured: 2 hits per route,
+distinct sequence numbers).
+
+Turn it off: **Admin → Data streams → your web stream → Enhanced measurement → gear icon →
+untick "Page changes based on browser history events"**.
+
+Relying on that setting *instead* of the app's own tracking was measured and rejected — it
+dropped routes entirely (0–1 of 3 navigations recorded).
+
+### Per-route metadata
+
+Title, description, canonical, and og/twitter tags come from `site-routes.json` and are applied
+centrally in `RootLayout`. `index.html` keeps static defaults so crawlers that do not execute
+JavaScript still see sensible metadata. Adding a route is one entry in that file plus one line
+in `src/App.tsx`.
+
+### Before you publish
+
+Replace `YOUR_CONTACT_EMAIL` in `src/components/layout/ArticleLayout.tsx` with a real address — GDPR
+expects a reachable data-controller contact — and review the `LAST_UPDATED` date.
 
 There is no backend. Both `api.scryfall.com` and the image CDN `cards.scryfall.io` send
 `access-control-allow-origin: *`, so everything — lookup, art, and PDF assembly — happens in the
@@ -93,17 +169,54 @@ Scryfall's `png` image is 744 × 1040 px, which is exactly 300 DPI at that size 
 
 ```
 src/
+  main.tsx                     entry: mounts <App/>, arms analytics
+  App.tsx                      routes
+  routes/                      one component per route
+    HomeRoute.tsx              the deck -> PDF tool
+    About / Privacy / Terms / Legal / NotFound
+  components/
+    layout/                    NavBar, SiteFooter, RootLayout, ArticleLayout,
+                               ConsentBanner, navigation.ts
+    deck/                      DeckInput, DeckSummary, DeckGrid, CardTile,
+                               VersionPicker, UnresolvedCards
+    print/                     PrintOptionsDialog, PrintActionBar
+    ui/                        Prose.tsx - shared typographic primitives
+  hooks/
+    useDeckResolution.ts       parse + resolve + per-card edits
+    usePdfExport.ts            worker handoff and progress
+    usePersistentState.ts      useState mirrored into localStorage
   lib/
-    parseDeck.ts   Arena/Moxfield parser
-    scryfall.ts    batch resolve, lazy printings, rate limiting
-    cache.ts       IndexedDB via idb-keyval
-    slots.ts       deck -> printable slots (double-faced handling)
-    geometry.ts    card/page maths in PDF points
-    sheet.ts       3x3 placement + cut marks (no I/O, so it is testable)
-    pdf.ts         worker wrapper + download
-  components/      DeckInput, CardGrid tiles, VersionPicker, PrintOptionsDialog, UnresolvedList
-  workers/         pdf.worker.ts
+    deck/                      parseDeck.ts, slots.ts
+    scryfall/                  client.ts, cache.ts, types.ts
+    print/                     geometry.ts, sheet.ts, exportPdf.ts, types.ts
+    analytics.ts
+  workers/pdf.worker.ts
+  styles/index.css
 ```
 
-Proxies are for playtesting, cubes, and Commander pods that allow them — not for sanctioned play
-or resale.
+## Legal
+
+**Not for sanctioned play.** The Magic Tournament Rules require Authorized Game Cards to be
+"regulation-sized, genuine Magic cards publicly released by Wizards of the Coast" (MTR 3.3).
+Printed proxies are not Authorized Game Cards and are prohibited in all sanctioned events. Only a
+Head Judge may issue a proxy, and only for a card damaged during that tournament (MTR 3.4). Casual
+playtesting, cubes, and Commander pods are up to the group — ask first.
+
+**Personal use only.** Do not sell, trade, or distribute printed proxies, and do not present them
+as genuine cards. Selling counterfeit Magic cards infringes Wizards of the Coast's copyrights and
+trademarks.
+
+**Image handling.** [Scryfall's data and image guidelines](https://scryfall.com/docs/api) require
+that card images are not cropped, distorted, colour-shifted, or overlaid with your own marks, and
+that the copyright and artist lines stay visible. Card art is therefore rendered whole and
+unmodified, and every UI control sits outside the image rather than on top of it. The app also
+leaves the browser's `User-Agent` intact, which is what Scryfall asks of on-page JavaScript.
+
+> MTG Print Proxy is unofficial Fan Content permitted under the
+> [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy). Not
+> approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the
+> Coast. ©Wizards of the Coast LLC.
+
+Magic: The Gathering and all card images are copyright Wizards of the Coast, LLC. Artwork is
+copyright its respective artists. This project is not produced by, endorsed by, or affiliated with
+Wizards of the Coast, Scryfall, or mtgprint.net.

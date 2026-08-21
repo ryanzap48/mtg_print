@@ -8,11 +8,21 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23111'/%3E%3Crect x='7' y='5.5' width='13' height='18' rx='2' fill='%23fff'/%3E%3Crect x='12' y='8.5' width='13' height='18' rx='2' fill='%23e8823c' stroke='%23111' stroke-width='1.5'/%3E%3C/svg%3E"
     />
+    <!-- Static defaults. RootLayout replaces these per route at runtime; they exist so
+         crawlers that do not execute JavaScript still get sensible metadata. -->
     <meta
       name="description"
-      content="Paste an MTG decklist, pick your printings, and export a print-ready PDF with cards at true 63x88mm size, 9 per page."
+      content="Paste a Magic: The Gathering decklist and download a print-ready PDF, 9 cards per page at true 63x88mm size. Pick any printing, free, runs entirely in your browser."
     />
-    <title>MTG Print — proxy sheet generator</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MTG Print Proxy" />
+    <meta property="og:title" content="MTG Print Proxy — print Magic proxies at true card size" />
+    <meta
+      property="og:description"
+      content="Paste a Magic: The Gathering decklist and download a print-ready PDF, 9 cards per page at true 63x88mm size."
+    />
+    <meta name="twitter:card" content="summary" />
+    <title>MTG Print Proxy — print Magic proxies at true card size</title>
   </head>
   <body>
     <div id="root"></div>

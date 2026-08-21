@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import type { CutMarkStyle, PaperSize, PrintOptions, Quality } from '../lib/types'
-import { PAPER_PT, CARD_H_MM, CARD_W_MM, MM_TO_PT } from '../lib/geometry'
+import type { CutMarkStyle, PaperSize, PrintOptions, Quality } from '../../lib/print/types'
+import { PAPER_PT, CARD_H_MM, CARD_W_MM, MM_TO_PT } from '../../lib/print/geometry'
 
 interface Props {
   open: boolean
@@ -35,7 +35,7 @@ export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount
       }}
       className="m-0 w-full max-w-md rounded-t-2xl p-0 backdrop:bg-black/50 sm:m-auto sm:rounded-2xl"
       style={{
-        background: 'var(--surface-raised)',
+        background: 'var(--surface)',
         color: 'var(--text)',
         marginTop: 'auto',
         marginBottom: 0,
@@ -103,7 +103,7 @@ export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount
               type="checkbox"
               checked={options.bleed}
               onChange={(e) => onChange({ ...options, bleed: e.target.checked })}
-              className="mt-0.5 size-4 shrink-0 accent-[var(--color-brand-500)]"
+              className="mt-0.5 size-4 shrink-0 accent-neutral-900"
             />
             <span>
               <span className="text-sm font-semibold">Bleed edge</span>
@@ -178,7 +178,7 @@ function Segmented<T extends string>({
             className="rounded-md px-2 py-1.5 text-xs font-semibold transition-colors"
             style={
               active
-                ? { background: 'var(--color-brand-500)', color: '#fff' }
+                ? { background: 'var(--text)', color: '#fff' }
                 : { color: 'var(--text-muted)' }
             }
           >

@@ -1,0 +1,47 @@
+[
+  {
+    "path": "/",
+    "label": "Home",
+    "inNav": false,
+    "priority": "1.0",
+    "changefreq": "monthly",
+    "title": "MTG Print Proxy — print Magic proxies at true card size",
+    "description": "Paste a Magic: The Gathering decklist and download a print-ready PDF, 9 cards per page at true 63x88mm size. Pick any printing, free, runs entirely in your browser."
+  },
+  {
+    "path": "/about",
+    "label": "About",
+    "inNav": true,
+    "priority": "0.6",
+    "changefreq": "yearly",
+    "title": "About — MTG Print Proxy",
+    "description": "How MTG Print Proxy turns a decklist into a print-ready proxy sheet, how double-faced cards are handled, and why you must print at 100% scale."
+  },
+  {
+    "path": "/privacy",
+    "label": "Privacy",
+    "inNav": true,
+    "priority": "0.3",
+    "changefreq": "yearly",
+    "title": "Privacy Policy — MTG Print Proxy",
+    "description": "What MTG Print Proxy stores on your device, the optional Google Analytics cookies you can decline, and how to withdraw consent. Decklists never leave your browser."
+  },
+  {
+    "path": "/terms",
+    "label": "Terms",
+    "inNav": true,
+    "priority": "0.3",
+    "changefreq": "yearly",
+    "title": "Terms of Service — MTG Print Proxy",
+    "description": "Terms of use for MTG Print Proxy: a free, non-commercial tool provided as is, for personal playtesting use only."
+  },
+  {
+    "path": "/legal",
+    "label": "Legal",
+    "inNav": true,
+    "priority": "0.3",
+    "changefreq": "yearly",
+    "title": "Legal — MTG Print Proxy",
+    "description": "Proxy rules for sanctioned play (MTR 3.3 and 3.4), personal-use limits, card image handling, and Wizards of the Coast Fan Content Policy notices."
+  }
+]

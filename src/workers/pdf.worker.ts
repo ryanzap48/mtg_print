@@ -1,8 +1,8 @@
 /// <reference lib="webworker" />
 import { PDFDocument } from '@cantoo/pdf-lib'
-import { CARDS_PER_SHEET } from '../lib/geometry'
-import { composeSheet } from '../lib/sheet'
-import type { PrintOptions } from '../lib/types'
+import { CARDS_PER_SHEET } from '../lib/print/geometry'
+import { composeSheet } from '../lib/print/sheet'
+import type { PrintOptions } from '../lib/print/types'
 
 export interface WorkerSlot {
   imageUrl: string

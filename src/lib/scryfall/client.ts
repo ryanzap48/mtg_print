@@ -1,4 +1,4 @@
-import type { DeckEntry } from './parseDeck'
+import type { DeckEntry } from '../deck/parseDeck'
 import type { CardIdentifier, ScryfallCard } from './types'
 import { cardKey, getCachedCard, getCachedPrints, putCachedCard, putCachedPrints } from './cache'
 

@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+
+/* Tailwind 4 is configured in CSS — no tailwind.config.js. */
+@theme {
+  /* A Magic card's aspect ratio, used for every image box and placeholder. */
+  --aspect-card: 63 / 88;
+}
+
+@layer base {
+  :root {
+    --surface: #ffffff;
+    --surface-sunken: #fafafa;
+    --border: #e5e5e5;
+    --border-strong: #d4d4d4;
+    --text: #171717;
+    --text-muted: #737373;
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --nav: #1c1917;
+    --nav-text: #fafaf9;
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* `clip` rather than `hidden` — it cannot be scrolled into, and unlike `hidden` it does
+       not silently turn descendants' `position: sticky` into a no-op. */
+    overflow-x: clip;
+  }
+
+  body {
+    background: var(--surface);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    /* 16px keeps iOS Safari from zooming when the decklist textarea takes focus. */
+    font-size: 16px;
+    overflow-x: clip;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium;
+    @apply transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-primary {
+    background: var(--text);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #404040;
+  }
+
+  .btn-ghost {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--surface-sunken);
+  }
+
+  .field {
+    @apply w-full min-w-0 rounded-md px-2 py-1.5 text-sm;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+  }
+}
+
+@layer utilities {
+  /* Skip layout and paint for offscreen tiles — meaningful at ~100 cards. */
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 260px;
+  }
+
+  .safe-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

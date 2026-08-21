@@ -1,3 +1,5 @@
+/** Subset of Scryfall's card object that this app relies on. */
+
 export interface ImageUris {
   small?: string
   normal?: string
@@ -37,35 +39,9 @@ export interface ScryfallCard {
   scryfall_uri?: string
 }
 
+/** How a card is addressed in a POST /cards/collection lookup. */
 export interface CardIdentifier {
   set?: string
   collector_number?: string
   name?: string
-}
-
-/** One physical thing to print: a single face of a single copy of a card. */
-export interface PrintSlot {
-  id: string
-  entryKey: string
-  name: string
-  imageUrl: string
-  face: 'front' | 'back'
-}
-
-export type PaperSize = 'a4' | 'letter'
-export type Quality = 'jpeg' | 'png'
-export type CutMarkStyle = 'none' | 'marks' | 'grid'
-
-export interface PrintOptions {
-  paper: PaperSize
-  cutMarks: CutMarkStyle
-  bleed: boolean
-  quality: Quality
-}
-
-export const DEFAULT_PRINT_OPTIONS: PrintOptions = {
-  paper: 'letter',
-  cutMarks: 'marks',
-  bleed: false,
-  quality: 'jpeg',
 }
