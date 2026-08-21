@@ -8,6 +8,7 @@ interface Props {
   doubleFacedCount: number
   onOpenOptions: () => void
   onDownload: () => void
+  onCancel: () => void
   downloadLabel: string
   downloading: boolean
 }
@@ -23,6 +24,7 @@ export function DeckSummary({
   doubleFacedCount,
   onOpenOptions,
   onDownload,
+  onCancel,
   downloadLabel,
   downloading,
 }: Props) {
@@ -44,6 +46,11 @@ export function DeckSummary({
       <button type="button" className="btn btn-ghost px-3 py-1.5 text-xs" onClick={onOpenOptions}>
         Options
       </button>
+      {downloading && (
+        <button type="button" className="btn btn-ghost px-3 py-1.5 text-xs" onClick={onCancel}>
+          Cancel
+        </button>
+      )}
       <button
         type="button"
         className="btn btn-primary hidden px-4 py-1.5 text-xs sm:inline-flex"

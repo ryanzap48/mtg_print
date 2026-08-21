@@ -3,9 +3,11 @@ import { DeckInput } from '../components/deck/DeckInput'
 import { DeckGrid } from '../components/deck/DeckGrid'
 import { DeckSummary } from '../components/deck/DeckSummary'
 import { UnresolvedCards } from '../components/deck/UnresolvedCards'
+import { SavedDecks } from '../components/deck/SavedDecks'
 import { PrintOptionsDialog } from '../components/print/PrintOptionsDialog'
 import { PrintActionBar } from '../components/print/PrintActionBar'
 import { useDeckResolution } from '../hooks/useDeckResolution'
+import { useDeckHistory } from '../hooks/useDeckHistory'
 import { usePdfExport } from '../hooks/usePdfExport'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { buildSlots, isBasicLand, isDoubleFaced, pageCount } from '../lib/deck/slots'
@@ -27,7 +29,13 @@ export function HomeRoute() {
   const [optionsOpen, setOptionsOpen] = useState(false)
 
   const deck = useDeckResolution()
-  const { exportPdf, progress, error: exportError } = usePdfExport()
+  const history = useDeckHistory()
+
+  const submit = (value: string) => {
+    history.remember(value)
+    deck.resolve(value)
+  }
+  const { exportPdf, cancelExport, progress, error: exportError } = usePdfExport()
 
   // Skipping basics changes the sheet, so apply it here rather than inside the worker: the
   // counts on screen then match the PDF you actually get.
@@ -73,8 +81,14 @@ export function HomeRoute() {
       <DeckInput
         value={text}
         onChange={setText}
-        onSubmit={() => deck.resolve(text)}
+        onSubmit={() => submit(text)}
         pending={deck.isResolving}
+      />
+
+      <SavedDecks
+        decks={history.decks}
+        onLoad={(saved) => setText(saved.text)}
+        onForget={history.forget}
       />
 
       {error && (
@@ -103,6 +117,7 @@ export function HomeRoute() {
             doubleFacedCount={doubleFacedCount}
             onOpenOptions={() => setOptionsOpen(true)}
             onDownload={download}
+            onCancel={cancelExport}
             downloadLabel={progress ? progressLabel(progress) : 'Download PDF'}
             downloading={Boolean(progress)}
           />
@@ -119,6 +134,7 @@ export function HomeRoute() {
           }
           disabled={Boolean(progress)}
           onDownload={download}
+          onCancel={cancelExport}
         />
       )}
 

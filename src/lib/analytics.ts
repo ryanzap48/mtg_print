@@ -48,7 +48,7 @@ export function setConsent(choice: ConsentChoice) {
 let loaded = false
 
 /** Injects gtag.js. Safe to call repeatedly; only the first call does anything. */
-export function loadAnalytics() {
+function loadAnalytics() {
   if (loaded || !GA_ID) return
   loaded = true
 

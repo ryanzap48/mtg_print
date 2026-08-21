@@ -169,7 +169,7 @@ export async function fetchPrintings(card: ScryfallCard): Promise<ScryfallCard[]
   return result
 }
 
-export function hasImage(card: ScryfallCard): boolean {
+function hasImage(card: ScryfallCard): boolean {
   return Boolean(card.image_uris?.png ?? card.card_faces?.[0]?.image_uris?.png)
 }
 

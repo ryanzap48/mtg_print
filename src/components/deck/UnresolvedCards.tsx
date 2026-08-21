@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { DeckEntry } from '../../lib/deck/parseDeck'
 import type { ScryfallCard } from '../../lib/scryfall/types'
 import { searchByName } from '../../lib/scryfall/client'
-import { frontImage } from '../../lib/deck/slots'
+import { thumbImage } from '../../lib/deck/slots'
 import { versionLabel } from './VersionPicker'
 
 interface Props {
@@ -108,7 +108,7 @@ function UnresolvedRow({
       {results && results.length > 0 && (
         <ul className="mt-2 flex gap-2 overflow-x-auto pb-1">
           {results.slice(0, 24).map((card) => {
-            const src = frontImage(card)
+            const src = thumbImage(card)
             return (
               <li key={card.id} className="shrink-0">
                 <button

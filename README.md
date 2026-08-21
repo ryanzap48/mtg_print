@@ -1,7 +1,11 @@
 # MTG Print Proxy
 
-A mock of [mtgprint.net](https://mtgprint.net). Paste a Magic decklist, pick the printing you want
-for each card, and download a PDF laid out 9 to a page at **true card size — 63 × 88 mm**.
+Paste a Magic decklist, pick the printing you want for each card, and download a print-ready PDF
+at **true card size, 63 × 88 mm**, as many per page as the paper allows.
+
+An independent project, built from scratch against the public
+[Scryfall API](https://scryfall.com/docs/api). Not affiliated with, endorsed by, or derived from
+any other proxy-printing service.
 
 ```bash
 npm install

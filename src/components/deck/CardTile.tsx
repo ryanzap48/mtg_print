@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ScryfallCard } from '../../lib/scryfall/types'
-import { backImage, frontImage, isDoubleFaced } from '../../lib/deck/slots'
+import { displayImage, isDoubleFaced } from '../../lib/deck/slots'
 import { VersionPicker } from './VersionPicker'
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
 export function CardTile({ card, qty, onVersionChange }: Props) {
   const [showBack, setShowBack] = useState(false)
   const twoFaced = isDoubleFaced(card)
-  const src = (showBack ? backImage(card) : frontImage(card)) ?? frontImage(card)
+  const src = displayImage(card, showBack ? 'back' : 'front') ?? displayImage(card)
 
   return (
     <li className="cv-auto flex min-w-0 flex-col gap-1.5">

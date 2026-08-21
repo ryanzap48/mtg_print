@@ -16,7 +16,7 @@ export function Logo({ className = 'size-7' }: { className?: string }) {
         rx="2.5"
         fill="#e8823c"
         stroke="#1c1917"
-        stroke-width="1.5"
+        strokeWidth="1.5"
       />
     </svg>
   )

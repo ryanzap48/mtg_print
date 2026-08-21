@@ -96,7 +96,7 @@ export function composeSheet(
  * `marks` keeps every line in the page margin so no ink lands on a card; `grid` runs the lines
  * across the whole sheet, which is easier to follow with a guillotine trimmer.
  */
-export function drawCutMarks(page: DrawablePage, geo: PageGeometry, style: 'marks' | 'grid') {
+function drawCutMarks(page: DrawablePage, geo: PageGeometry, style: 'marks' | 'grid') {
   const top = geo.pageH - geo.marginY
   const bottom = geo.marginY
   const left = geo.marginX

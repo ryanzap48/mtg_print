@@ -1,5 +1,12 @@
-import { useCallback, useState } from 'react'
-import { generatePdf, openPdfTab, showPdf, type PdfProgress } from '../lib/print/exportPdf'
+import { useCallback, useRef, useState } from 'react'
+import {
+  CANCELLED,
+  generatePdf,
+  openPdfTab,
+  showPdf,
+  updatePdfTab,
+  type PdfProgress,
+} from '../lib/print/exportPdf'
 import type { PrintOptions } from '../lib/print/types'
 import type { PrintSlot } from '../lib/deck/slots'
 import type { ScryfallCard } from '../lib/scryfall/types'
@@ -8,6 +15,7 @@ import type { ScryfallCard } from '../lib/scryfall/types'
 export function usePdfExport() {
   const [progress, setProgress] = useState<PdfProgress | null>(null)
   const [error, setError] = useState<string>()
+  const jobRef = useRef<{ cancel: () => void; tab: Window | null } | null>(null)
 
   const exportPdf = useCallback(
     async (
@@ -30,16 +38,35 @@ export function usePdfExport() {
 
       setProgress({ phase: 'download', done: 0, total: workerSlots.length })
       try {
-        const { promise } = generatePdf(workerSlots, options, decklist, setProgress)
+        const onProgress = (p: PdfProgress) => {
+          setProgress(p)
+          updatePdfTab(tab, p)
+        }
+        const { promise, cancel } = generatePdf(workerSlots, options, decklist, onProgress)
+        jobRef.current = { cancel, tab }
         showPdf(await promise, `mtg-print-${slots.length}-cards.pdf`, tab)
       } catch (err) {
         tab?.close()
-        setError(err instanceof Error ? err.message : 'Could not build the PDF.')
+        // A cancel terminates the worker, which surfaces here; that is not an error to report.
+        if (!(err instanceof Error && err.message === CANCELLED)) {
+          setError(err instanceof Error ? err.message : 'Could not build the PDF.')
+        }
       } finally {
+        jobRef.current = null
         setProgress(null)
       }
     },
     [progress])
 
-  return { exportPdf, progress, error }
+  /** Aborts an in-flight build and closes the tab that was waiting for it. */
+  const cancelExport = useCallback(() => {
+    const job = jobRef.current
+    if (!job) return
+    job.cancel()
+    job.tab?.close()
+    jobRef.current = null
+    setProgress(null)
+  }, [])
+
+  return { exportPdf, cancelExport, progress, error }
 }

@@ -1,4 +1,4 @@
-import { get, set, createStore } from 'idb-keyval'
+import { get, set, del, keys, createStore } from 'idb-keyval'
 import type { ScryfallCard } from './types'
 
 /**
@@ -36,10 +36,22 @@ export async function getCachedPrints(oracleId: string): Promise<ScryfallCard[] 
   }
 }
 
+/**
+ * Every version dropdown a user opens stores a full list of printings, and a card like Sol Ring
+ * carries 130 of them. Left unbounded that grows without limit, so keep only the most recent.
+ */
+const MAX_CACHED_PRINTS = 150
+
 export async function putCachedPrints(oracleId: string, prints: ScryfallCard[]): Promise<void> {
   try {
     await set(oracleId, prints, printsStore)
+    const all = await keys(printsStore)
+    if (all.length > MAX_CACHED_PRINTS) {
+      // idb-keyval keys come back in insertion order, so the front of the list is the oldest.
+      const excess = all.slice(0, all.length - MAX_CACHED_PRINTS)
+      await Promise.all(excess.map((k) => del(k, printsStore)))
+    }
   } catch {
-    // ignore
+    // A full or unavailable IndexedDB must never break the app.
   }
 }

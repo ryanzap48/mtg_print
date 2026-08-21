@@ -2,6 +2,7 @@
 import { PDFDocument, StandardFonts, rgb } from '@cantoo/pdf-lib'
 import { MM_TO_PT, PAPER_PT, pageGeometry } from '../lib/print/geometry'
 import { composeSheet } from '../lib/print/sheet'
+import { fetchArt } from '../lib/net/fetchArt'
 import type { PrintOptions } from '../lib/print/types'
 
 export interface WorkerSlot {
@@ -24,8 +25,16 @@ export type WorkerMessage =
   | { type: 'error'; message: string }
 
 const CONCURRENCY = 6
-const JPEG_QUALITY = 0.92
 
+/**
+ * `fetch` must stay bound to the worker global. Passing the bare reference detaches it and
+ * every call fails with "Illegal invocation".
+ */
+const ART_DEPS = {
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init),
+  caches: typeof caches !== 'undefined' ? caches : undefined,
+}
+const JPEG_QUALITY = 0.92
 self.onmessage = async (event: MessageEvent<GenerateRequest>) => {
   if (event.data?.type !== 'generate') return
   try {
@@ -60,9 +69,7 @@ async function generate({
   post({ type: 'progress', phase: 'download', done: 0, total: uniqueUrls.length })
 
   await inParallel(uniqueUrls, CONCURRENCY, async (url) => {
-    const res = await fetch(url, { mode: 'cors' })
-    if (!res.ok) throw new Error(`Could not download card art (HTTP ${res.status}).`)
-    const blob = await res.blob()
+    const blob = await fetchArt(url, ART_DEPS)
     encoded.set(
       url,
       options.quality === 'png'
@@ -74,7 +81,8 @@ async function generate({
 
   const pdf = await PDFDocument.create()
   pdf.setTitle('MTG Print Proxy | proxy sheet')
-  pdf.setCreator('MTG Print')
+  pdf.setCreator('MTG Print Proxy')
+  pdf.setProducer('MTG Print Proxy')
 
   const images = new Map<string, unknown>()
   let embedded = 0

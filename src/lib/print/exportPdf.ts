@@ -21,6 +21,8 @@ export function progressLabel(p: PdfProgress): string {
  * Runs the whole build in a worker so a 100-card deck (~95 MB of art to fetch, decode and
  * re-encode) never blocks the main thread.
  */
+export const CANCELLED = 'pdf-export-cancelled'
+
 export function generatePdf(
   slots: WorkerSlot[],
   options: PrintOptions,
@@ -31,7 +33,9 @@ export function generatePdf(
     type: 'module',
   })
 
+  let rejectPromise: ((reason: Error) => void) | undefined
   const promise = new Promise<Blob>((resolve, reject) => {
+    rejectPromise = reject
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
       const msg = event.data
       if (msg.type === 'progress') {
@@ -52,7 +56,32 @@ export function generatePdf(
     worker.postMessage(request)
   })
 
-  return { promise, cancel: () => worker.terminate() }
+  return {
+    promise,
+    cancel: () => {
+      // Terminating the worker fires no message, so settle the promise ourselves; otherwise
+      // the awaiting caller would hang and never clear its progress state.
+      rejectPromise?.(new Error(CANCELLED))
+      worker.terminate()
+    },
+  }
+}
+
+/**
+ * Weight of each phase in the overall progress bar. Downloading art dominates the wall clock,
+ * so splitting evenly would make the bar stall at 33% and then leap to done.
+ */
+const PHASE_WEIGHT: Record<PdfProgress['phase'], { base: number; span: number }> = {
+  download: { base: 0, span: 0.72 },
+  embed: { base: 0.72, span: 0.16 },
+  draw: { base: 0.88, span: 0.12 },
+}
+
+/** Overall completion 0..1, monotonically increasing across the three phases. */
+function overallFraction(p: PdfProgress): number {
+  const { base, span } = PHASE_WEIGHT[p.phase]
+  const within = p.total > 0 ? Math.min(p.done / p.total, 1) : 0
+  return Math.min(base + span * within, 1)
 }
 
 /**
@@ -60,19 +89,57 @@ export function generatePdf(
  *
  * Building the PDF takes several seconds, and a window.open() after an await has lost the user
  * gesture and is blocked by popup blockers. So the tab is claimed up front and given a holding
- * message, then pointed at the finished file.
+ * page, which updatePdfTab() then drives, before being pointed at the finished file.
  */
 export function openPdfTab(): Window | null {
   const tab = window.open('', '_blank')
   if (!tab) return null
-  tab.document.write(
-    '<!doctype html><meta charset="utf-8"><title>Building your PDF...</title>' +
-      '<body style="margin:0;display:grid;place-items:center;height:100vh;' +
-      'font:15px ui-sans-serif,system-ui,sans-serif;color:#171717;background:#fff">' +
-      '<p>Building your PDF, this tab will update when it is ready.</p></body>',
-  )
+  tab.document.write(`<!doctype html><meta charset="utf-8">
+<title>Building your PDF...</title>
+<style>
+  :root { color-scheme: light }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #fff; color: #171717;
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .box { width: min(22rem, 84vw); text-align: center }
+  h1 { font-size: 1rem; font-weight: 600; margin: 0 0 1rem }
+  .track { height: 6px; border-radius: 999px; background: #e5e5e5; overflow: hidden }
+  .fill { height: 100%; width: 0%; background: #171717; border-radius: 999px;
+          transition: width .25s ease }
+  .status { margin: .75rem 0 0; font-size: 12px; color: #737373;
+            display: flex; justify-content: space-between; gap: 1rem }
+</style>
+<div class="box">
+  <h1 id="pdf-title">Building your PDF...</h1>
+  <div class="track" role="progressbar" aria-labelledby="pdf-title"
+       aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pdf-bar">
+    <div class="fill" id="pdf-fill"></div>
+  </div>
+  <p class="status"><span id="pdf-phase">Starting</span><span id="pdf-pct">0%</span></p>
+</div>`)
   tab.document.close()
   return tab
+}
+
+/** Pushes progress into the holding tab. Safe to call after the user has closed it. */
+export function updatePdfTab(tab: Window | null, progress: PdfProgress) {
+  if (!tab || tab.closed) return
+  try {
+    const doc = tab.document
+    const pct = Math.round(overallFraction(progress) * 100)
+    const fill = doc.getElementById('pdf-fill')
+    const bar = doc.getElementById('pdf-bar')
+    const phase = doc.getElementById('pdf-phase')
+    const label = doc.getElementById('pdf-pct')
+    if (fill) fill.style.width = `${pct}%`
+    if (bar) bar.setAttribute('aria-valuenow', String(pct))
+    if (phase) phase.textContent = progressLabel(progress)
+    if (label) label.textContent = `${pct}%`
+  } catch {
+    // The tab may have been closed or navigated between the check and the write.
+  }
 }
 
 /**
