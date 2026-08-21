@@ -22,14 +22,8 @@ export function UnresolvedCards({ entries, invalidLines, onResolve, onDismiss }:
   if (!total) return null
 
   return (
-    <section
-      className="mt-4 rounded-lg p-3"
-      style={{
-        background: 'var(--danger-bg)',
-        border: '1px solid var(--danger-border)',
-        color: 'var(--danger)',
-      }}
-    >
+    // No panel, no tint: the red text carries the message on its own.
+    <section className="mt-5" style={{ color: 'var(--danger)' }}>
       <h2 className="text-sm font-semibold">
         Couldn’t find {total} card{total === 1 ? '' : 's'}
       </h2>
@@ -106,7 +100,7 @@ function UnresolvedRow({
       )}
 
       {results && results.length > 0 && (
-        <ul className="mt-2 flex gap-2 overflow-x-auto pb-1">
+        <ul className="mt-3 flex gap-3 overflow-x-auto pb-2">
           {results.slice(0, 24).map((card) => {
             const src = thumbImage(card)
             return (
@@ -115,7 +109,7 @@ function UnresolvedRow({
                   type="button"
                   onClick={() => onResolve(card)}
                   title={versionLabel(card)}
-                  className="block w-16 overflow-hidden rounded ring-1 ring-black/10 hover:ring-2 hover:ring-current"
+                  className="block w-28 overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-2 hover:ring-current sm:w-40"
                   style={{ aspectRatio: 'var(--aspect-card)' }}
                 >
                   {src && (

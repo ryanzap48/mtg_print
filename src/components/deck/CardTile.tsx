@@ -47,12 +47,12 @@ export function CardTile({ card, qty, onVersionChange }: Props) {
 
       <div className="flex min-w-0 items-baseline gap-1.5">
         <span
-          className="shrink-0 text-xs font-semibold tabular-nums"
+          className="shrink-0 text-xs font-semibold tabular-nums md:text-sm"
           style={{ color: 'var(--text-muted)' }}
         >
           {qty}×
         </span>
-        <p className="min-w-0 flex-1 truncate text-xs font-medium" title={card.name}>
+        <p className="min-w-0 flex-1 truncate text-xs font-medium md:text-sm" title={card.name}>
           {card.name}
         </p>
         {twoFaced && (

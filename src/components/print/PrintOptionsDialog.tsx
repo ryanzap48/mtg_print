@@ -44,7 +44,7 @@ export function PrintOptionsDialog({
         // Clicking the backdrop (the dialog element itself, outside its content) closes.
         if (e.target === ref.current) onClose()
       }}
-      className="m-0 max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-2xl p-0 backdrop:bg-black/50 sm:m-auto sm:rounded-2xl"
+      className="m-0 max-h-[92dvh] w-full max-w-none overflow-y-auto rounded-t-2xl p-0 backdrop:bg-black/50 sm:m-auto sm:max-w-3xl sm:rounded-2xl"
       style={{
         background: 'var(--surface)',
         color: 'var(--text)',
@@ -52,15 +52,17 @@ export function PrintOptionsDialog({
         marginBottom: 0,
       }}
     >
-      <div className="p-5 sm:p-6">
+      <div className="p-5 sm:p-7">
         <h2 className="text-lg font-bold">Print options</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
           {slotCount} card{slotCount === 1 ? '' : 's'} | {pages} page{pages === 1 ? '' : 's'} |{' '}
           {perSheet} per page at {CARD_W_MM} × {CARD_H_MM} mm
         </p>
 
-        <div className="mt-5 space-y-5">
-          <Field label="Paper size">
+        {/* One column on phones; two on desktop, where a single 448px column left the modal
+            a tall thin ribbon with most of the screen empty. */}
+        <div className="mt-5 grid gap-5 sm:grid-cols-2 sm:gap-x-8">
+          <Field label="Paper size" className="sm:col-span-2">
             <Segmented<PaperSize>
               value={options.paper}
               onChange={(paper) => set('paper', paper)}
@@ -132,7 +134,7 @@ export function PrintOptionsDialog({
             </Hint>
           </Field>
 
-          <div className="space-y-3">
+          <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2 sm:gap-x-8">
             <Toggle
               checked={options.blackCorners}
               onChange={(v) => set('blackCorners', v)}
@@ -169,17 +171,31 @@ export function PrintOptionsDialog({
           not fit sleeves.
         </div>
 
-        <button type="button" className="btn btn-primary mt-5 w-full" onClick={onClose}>
-          Done
-        </button>
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            className="btn btn-primary w-full sm:w-auto sm:px-10"
+            onClick={onClose}
+          >
+            Done
+          </button>
+        </div>
       </div>
     </dialog>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  className,
+}: {
+  label: string
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <div>
+    <div className={className}>
       <p className="mb-2 text-sm font-semibold">{label}</p>
       {children}
     </div>

@@ -50,7 +50,7 @@ export function VersionPicker({ card, onSelect }: Props) {
         aria-label={`Printing of ${card.name}`}
         // `w-full` plus a `min-w-0` parent is what stops a long option label from setting the
         // select's intrinsic width and widening the whole grid track.
-        className="field w-full max-w-full cursor-pointer truncate py-1 pr-6 text-[11px]"
+        className="field w-full max-w-full cursor-pointer truncate py-1 pr-6 text-[11px] md:py-1.5 md:text-xs"
         value={card.id}
         disabled={loading}
         onFocus={load}

@@ -9,7 +9,9 @@ interface Props {
 
 export function DeckGrid({ items, onVersionChange }: Props) {
   return (
-    <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    // Two across on phones, three on anything wider. Fewer, bigger cards make the art
+    // readable enough to actually judge a printing before committing it to paper.
+    <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-3">
       {items.map((item) => (
         <CardTile
           key={item.key}
