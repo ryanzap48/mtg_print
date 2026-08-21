@@ -55,14 +55,42 @@ export function generatePdf(
   return { promise, cancel: () => worker.terminate() }
 }
 
-export function downloadBlob(blob: Blob, filename: string) {
+/**
+ * Opens a blank tab immediately, while the click is still being handled.
+ *
+ * Building the PDF takes several seconds, and a window.open() after an await has lost the user
+ * gesture and is blocked by popup blockers. So the tab is claimed up front and given a holding
+ * message, then pointed at the finished file.
+ */
+export function openPdfTab(): Window | null {
+  const tab = window.open('', '_blank')
+  if (!tab) return null
+  tab.document.write(
+    '<!doctype html><meta charset="utf-8"><title>Building your PDF...</title>' +
+      '<body style="margin:0;display:grid;place-items:center;height:100vh;' +
+      'font:15px ui-sans-serif,system-ui,sans-serif;color:#171717;background:#fff">' +
+      '<p>Building your PDF, this tab will update when it is ready.</p></body>',
+  )
+  tab.document.close()
+  return tab
+}
+
+/**
+ * Shows the finished PDF. Uses the tab claimed at click time; if the browser refused it, falls
+ * back to saving the file so the export is never simply lost.
+ */
+export function showPdf(blob: Blob, filename: string, tab: Window | null) {
   const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.append(a)
-  a.click()
-  a.remove()
-  // Revoke on the next tick so Safari has time to start the download.
-  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  if (tab && !tab.closed) {
+    tab.location.href = url
+  } else {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.append(a)
+    a.click()
+    a.remove()
+  }
+  // Revoke late: the tab needs the URL alive long enough to load and render the document.
+  setTimeout(() => URL.revokeObjectURL(url), 120_000)
 }
