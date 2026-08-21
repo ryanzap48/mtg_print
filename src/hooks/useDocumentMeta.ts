@@ -11,10 +11,12 @@ export function useDocumentMeta({
   title,
   description,
   canonicalPath,
+  noindex = false,
 }: {
   title: string
   description: string
   canonicalPath: string
+  noindex?: boolean
 }) {
   useEffect(() => {
     document.title = title
@@ -26,7 +28,8 @@ export function useDocumentMeta({
     setMeta('name', 'twitter:title', title)
     setMeta('name', 'twitter:description', description)
     setCanonical(absoluteUrl(canonicalPath))
-  }, [title, description, canonicalPath])
+    setRobots(noindex)
+  }, [title, description, canonicalPath, noindex])
 }
 
 function absoluteUrl(path: string): string {
@@ -42,6 +45,19 @@ function setMeta(keyAttr: 'name' | 'property', key: string, content: string) {
     document.head.appendChild(el)
   }
   el.setAttribute('content', content)
+}
+
+/** Added only where it is needed, and removed again on the way out of such a route. */
+function setRobots(noindex: boolean) {
+  const existing = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]')
+  if (!noindex) {
+    existing?.remove()
+    return
+  }
+  const el = existing ?? document.createElement('meta')
+  el.setAttribute('name', 'robots')
+  el.setAttribute('content', 'noindex, follow')
+  if (!existing) document.head.appendChild(el)
 }
 
 function setCanonical(href: string) {

@@ -6,20 +6,20 @@ import { UnresolvedCards } from '../components/deck/UnresolvedCards'
 import { SavedDecks } from '../components/deck/SavedDecks'
 import { PrintOptionsDialog } from '../components/print/PrintOptionsDialog'
 import { PrintActionBar } from '../components/print/PrintActionBar'
-import { useDeckResolution } from '../hooks/useDeckResolution'
-import { useDeckHistory } from '../hooks/useDeckHistory'
 import { usePdfExport } from '../hooks/usePdfExport'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { buildSlots, isBasicLand, isDoubleFaced, pageCount } from '../lib/deck/slots'
 import { pageGeometry } from '../lib/print/geometry'
 import { progressLabel } from '../lib/print/exportPdf'
 import { DEFAULT_PRINT_OPTIONS, type PrintOptions } from '../lib/print/types'
+import { useDeckSession } from '../state/DeckSession'
 
-const DECK_STORAGE_KEY = 'mtg-print:deck'
 const OPTIONS_STORAGE_KEY = 'mtg-print:options'
 
 export function HomeRoute() {
-  const [text, setText] = usePersistentState<string>(DECK_STORAGE_KEY, '')
+  // Deck text, resolved cards and saved decks live above the routes, so they survive a trip
+  // to About and back.
+  const { text, setText, deck, history, submit } = useDeckSession()
   // Merge over the defaults so options saved before a new setting existed still work.
   const [options, setOptions] = usePersistentState<PrintOptions>(
     OPTIONS_STORAGE_KEY,
@@ -28,13 +28,6 @@ export function HomeRoute() {
   )
   const [optionsOpen, setOptionsOpen] = useState(false)
 
-  const deck = useDeckResolution()
-  const history = useDeckHistory()
-
-  const submit = (value: string) => {
-    history.remember(value)
-    deck.resolve(value)
-  }
   const { exportPdf, cancelExport, progress, error: exportError } = usePdfExport()
 
   // Skipping basics changes the sheet, so apply it here rather than inside the worker: the

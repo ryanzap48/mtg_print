@@ -16,7 +16,7 @@ import { pathToFileURL } from 'node:url'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const DIST = resolve(ROOT, 'dist')
-const ROUTES = ['/about', '/privacy', '/terms', '/legal']
+const ROUTES = ['/about', '/privacy', '/terms', '/legal', '/feedback', '/feedback/thanks']
 
 const template = readFileSync(resolve(DIST, 'index.html'), 'utf8')
 if (!template.includes('<div id="root"></div>')) {

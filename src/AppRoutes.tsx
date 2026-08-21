@@ -5,6 +5,8 @@ import { AboutRoute } from './routes/AboutRoute'
 import { PrivacyRoute } from './routes/PrivacyRoute'
 import { TermsRoute } from './routes/TermsRoute'
 import { LegalRoute } from './routes/LegalRoute'
+import { FeedbackRoute } from './routes/FeedbackRoute'
+import { ThanksRoute } from './routes/ThanksRoute'
 import { NotFoundRoute } from './routes/NotFoundRoute'
 
 /** Route table, kept free of a router so it can also be rendered statically at build time. */
@@ -17,6 +19,8 @@ export function AppRoutes() {
         <Route path="privacy" element={<PrivacyRoute />} />
         <Route path="terms" element={<TermsRoute />} />
         <Route path="legal" element={<LegalRoute />} />
+        <Route path="feedback" element={<FeedbackRoute />} />
+        <Route path="feedback/thanks" element={<ThanksRoute />} />
         <Route path="*" element={<NotFoundRoute />} />
       </Route>
     </Routes>

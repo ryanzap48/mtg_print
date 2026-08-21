@@ -52,7 +52,14 @@ export function VersionPicker({ card, onSelect }: Props) {
         // select's intrinsic width and widening the whole grid track.
         className="field w-full max-w-full cursor-pointer truncate py-1 pr-6 text-[11px] md:py-1.5 md:text-xs"
         value={card.id}
-        disabled={loading}
+        // Never disabled while loading. Disabling mid-click makes the browser abandon opening
+        // the native dropdown, so the first click did nothing and it took two to get it open.
+        // The select stays usable throughout; the extra options simply appear when they land.
+        //
+        // Hover starts the fetch early, so on a pointer device the list is usually ready
+        // before the click. focus and pointerdown cover keyboard and touch, which have no
+        // hover to work with.
+        onPointerEnter={load}
         onFocus={load}
         onPointerDown={load}
         onChange={(e) => {
@@ -65,7 +72,7 @@ export function VersionPicker({ card, onSelect }: Props) {
             {versionLabel(p)}
           </option>
         ))}
-        {!printings && !loading && <option disabled>Loading other printings…</option>}
+        {!printings && <option disabled>{loading ? 'Loading printings…' : 'Loading other printings…'}</option>}
       </select>
       {failed && <p className="mt-1 text-[10px]" style={{ color: 'var(--danger)' }}>Couldn’t load printings.</p>}
     </>

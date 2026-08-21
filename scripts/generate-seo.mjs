@@ -59,7 +59,10 @@ function lastModified() {
   }
 }
 
-const routes = JSON.parse(readFileSync(resolve(ROOT, 'site-routes.json'), 'utf8'))
+const routes = JSON.parse(readFileSync(resolve(ROOT, 'site-routes.json'), 'utf8')).filter(
+  // Confirmation pages and the like are reachable but are not destinations to rank.
+  (r) => r.inSitemap !== false,
+)
 const lastmod = lastModified()
 
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

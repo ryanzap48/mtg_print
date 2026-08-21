@@ -10,6 +10,10 @@ export interface SiteRoute {
   /** Per-route document metadata. */
   title: string
   description: string
+  /** Omit from sitemap.xml (defaults to included). */
+  inSitemap?: boolean
+  /** Ask search engines not to index this route (defaults to indexable). */
+  noindex?: boolean
 }
 
 /** Every public route. Also the source the sitemap is generated from at build time. */

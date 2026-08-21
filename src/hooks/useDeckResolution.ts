@@ -21,6 +21,8 @@ export function useDeckResolution() {
   const [invalidLines, setInvalidLines] = useState<string[]>([])
   const [error, setError] = useState<string>()
   const [isResolving, setIsResolving] = useState(false)
+  /** True once a printing has been swapped since this deck was resolved. */
+  const [printingsChanged, setPrintingsChanged] = useState(false)
   const abortRef = useRef<AbortController>(null)
 
   const resolve = useCallback(async (text: string) => {
@@ -40,6 +42,7 @@ export function useDeckResolution() {
 
     setError(undefined)
     setIsResolving(true)
+    setPrintingsChanged(false)
     try {
       const { resolved, unresolved: missing } = await resolveDeck(entries, {
         signal: controller.signal,
@@ -56,6 +59,7 @@ export function useDeckResolution() {
 
   const setCard = useCallback((key: string, card: ScryfallCard) => {
     setItems((prev) => prev?.map((i) => (i.key === key ? { ...i, card } : i)) ?? null)
+    setPrintingsChanged(true)
   }, [])
 
   const addResolved = useCallback((entry: DeckEntry, card: ScryfallCard) => {
@@ -73,6 +77,7 @@ export function useDeckResolution() {
     invalidLines,
     error,
     isResolving,
+    printingsChanged,
     resolve,
     setCard,
     addResolved,

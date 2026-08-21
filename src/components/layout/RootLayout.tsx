@@ -6,19 +6,20 @@ import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { trackPageView } from '../../lib/analytics'
 import { SiteFooter } from './SiteFooter'
 import { ConsentBanner } from './ConsentBanner'
+import { DeckSessionProvider } from '../../state/DeckSession'
 
 /** Chrome shared by every route: nav, footer, and the analytics consent gate. */
 export function RootLayout() {
   const title = useRouteMeta()
   useAnalyticsPageViews(title)
   return (
-    <>
+    <DeckSessionProvider>
       <ScrollToTop />
       <NavBar />
       <Outlet />
       <SiteFooter />
       <ConsentBanner />
-    </>
+    </DeckSessionProvider>
   )
 }
 
@@ -31,6 +32,8 @@ function useRouteMeta() {
     title,
     description: route?.description ?? 'That page does not exist on MTG Print Proxy.',
     canonicalPath: route?.path ?? pathname,
+    // Unknown paths are 404s, which should not be indexed either.
+    noindex: route ? route.noindex === true : true,
   })
   return title
 }

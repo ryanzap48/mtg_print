@@ -62,6 +62,14 @@ export function PrivacyRoute() {
         </Li>
       </List>
 
+      <H2>The feedback form</H2>
+      <p>
+        If you send feedback, the message and any name or email address you choose to include are
+        passed to a third-party form service, which forwards them to us. Nothing else is attached:
+        no decklist, no analytics identifier, no page history. Leaving the email field blank is
+        fine; it only exists so we can reply.
+      </p>
+
       <H2>Your rights</H2>
       <p>
         If you are in the EU, UK, or a similar jurisdiction, you have the right to access, correct,

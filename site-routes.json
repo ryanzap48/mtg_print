@@ -43,5 +43,25 @@
     "changefreq": "yearly",
     "title": "Legal | MTG Print Proxy",
     "description": "Proxy rules for sanctioned play (MTR 3.3 and 3.4), personal-use limits, card image handling, and Wizards of the Coast Fan Content Policy notices."
+  },
+  {
+    "path": "/feedback",
+    "label": "Feedback",
+    "inNav": true,
+    "priority": "0.5",
+    "changefreq": "yearly",
+    "title": "Send feedback | MTG Print Proxy",
+    "description": "Report a card that will not resolve, a printing that looks wrong, or suggest an improvement to MTG Print Proxy."
+  },
+  {
+    "path": "/feedback/thanks",
+    "label": "Thanks",
+    "inNav": false,
+    "inSitemap": false,
+    "noindex": true,
+    "priority": "0.1",
+    "changefreq": "yearly",
+    "title": "Thanks for the feedback | MTG Print Proxy",
+    "description": "Your message was sent to MTG Print Proxy."
   }
 ]

@@ -40,19 +40,21 @@ function write(decks: SavedDeck[]) {
 export function useDeckHistory() {
   const [decks, setDecks] = useState<SavedDeck[]>(read)
 
-  const remember = useCallback((text: string) => {
+  /** Returns the id of the saved entry, so later edits can be applied to that same one. */
+  const remember = useCallback((text: string): string | null => {
     const trimmed = text.trim()
-    if (!trimmed) return
+    if (!trimmed) return null
     const { entries } = parseDeck(trimmed)
-    if (!entries.length) return
+    if (!entries.length) return null
 
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     setDecks((prev) => {
       // Re-submitting a list already in the history moves it to the front rather than
       // adding a duplicate.
       const withoutDuplicate = prev.filter((d) => d.text.trim() !== trimmed)
       const next: SavedDeck[] = [
         {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          id,
           text: trimmed,
           label: entries[0].name,
           cardCount: entries.reduce((sum, e) => sum + e.qty, 0),
@@ -60,6 +62,32 @@ export function useDeckHistory() {
         },
         ...withoutDuplicate,
       ].slice(0, MAX_ENTRIES)
+      write(next)
+      return next
+    })
+    return id
+  }, [])
+
+  /**
+   * Revises a saved deck in place, keeping its position in the list. Used while a deck is on
+   * screen so that swapping a printing is reflected in what gets restored later.
+   */
+  const update = useCallback((id: string, text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    const { entries } = parseDeck(trimmed)
+    if (!entries.length) return
+
+    setDecks((prev) => {
+      const at = prev.findIndex((d) => d.id === id)
+      if (at === -1 || prev[at]!.text === trimmed) return prev
+      const next = [...prev]
+      next[at] = {
+        ...prev[at]!,
+        text: trimmed,
+        label: entries[0].name,
+        cardCount: entries.reduce((sum, e) => sum + e.qty, 0),
+      }
       write(next)
       return next
     })
@@ -78,5 +106,5 @@ export function useDeckHistory() {
     write([])
   }, [])
 
-  return { decks, remember, forget, clear }
+  return { decks, remember, update, forget, clear }
 }
