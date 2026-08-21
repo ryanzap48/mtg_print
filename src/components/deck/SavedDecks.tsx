@@ -25,11 +25,14 @@ export function SavedDecks({ decks, onLoad, onForget }: Props) {
               <button
                 type="button"
                 onClick={() => onLoad(deck)}
-                title={`Load ${deck.label} (${deck.cardCount} cards), saved ${formatWhen(deck.savedAt)}`}
+                title={`Load ${deck.label} (${deck.cardCount} card${deck.cardCount === 1 ? '' : 's'}), saved ${formatWhen(deck.savedAt)}`}
                 className="max-w-[13rem] truncate px-2.5 py-1.5 text-xs hover:opacity-60"
               >
                 <span className="font-medium">{deck.label}</span>
-                <span style={{ color: 'var(--text-muted)' }}> {deck.cardCount} cards</span>
+                <span style={{ color: 'var(--text-muted)' }}>
+                  {' '}
+                  {deck.cardCount} card{deck.cardCount === 1 ? '' : 's'}
+                </span>
               </button>
               <button
                 type="button"

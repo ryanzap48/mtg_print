@@ -29,6 +29,16 @@ function useDeckSessionValue() {
     void deck.resolve(value)
   }
 
+  /**
+   * Restores a saved deck and resolves it straight away, so one click brings the cards back
+   * rather than only refilling the box. Re-saving moves it to the front of the list, and the
+   * new entry becomes the one that later printing swaps update.
+   */
+  const loadSaved = (savedText: string) => {
+    setText(savedText)
+    submit(savedText)
+  }
+
   // Keep the saved copy in step while this deck is on screen. Only once a printing has
   // actually been swapped, so an untouched deck keeps the text exactly as it was typed,
   // including any comments or section headers.
@@ -40,7 +50,7 @@ function useDeckSessionValue() {
   }, [activeDeckId, printingsChanged, items, update])
 
   return useMemo(
-    () => ({ text, setText, deck, history, submit, activeDeckId }),
+    () => ({ text, setText, deck, history, submit, loadSaved, activeDeckId }),
     // `submit` closes over the current values, so rebuild the object whenever they change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [text, setText, deck, history, activeDeckId],

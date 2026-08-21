@@ -1,5 +1,10 @@
 import type { PrintOptions } from './types'
-import type { GenerateRequest, WorkerMessage, WorkerSlot } from '../../workers/pdf.worker'
+import type {
+  CalibrationRequest,
+  GenerateRequest,
+  WorkerMessage,
+  WorkerSlot,
+} from '../../workers/pdf.worker'
 
 export interface PdfProgress {
   phase: 'download' | 'embed' | 'draw'
@@ -91,6 +96,31 @@ function overallFraction(p: PdfProgress): number {
  * gesture and is blocked by popup blockers. So the tab is claimed up front and given a holding
  * page, which updatePdfTab() then drives, before being pointed at the finished file.
  */
+/** One-page test sheet, built in the same worker so pdf-lib stays out of the main bundle. */
+export function generateCalibrationPdf(options: PrintOptions): Promise<Blob> {
+  const worker = new Worker(new URL('../../workers/pdf.worker.ts', import.meta.url), {
+    type: 'module',
+  })
+  return new Promise<Blob>((resolve, reject) => {
+    worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
+      const msg = event.data
+      if (msg.type === 'done') {
+        resolve(new Blob([msg.bytes], { type: 'application/pdf' }))
+        worker.terminate()
+      } else if (msg.type === 'error') {
+        reject(new Error(msg.message))
+        worker.terminate()
+      }
+    }
+    worker.onerror = (e) => {
+      reject(new Error(e.message || 'Could not build the calibration page.'))
+      worker.terminate()
+    }
+    const request: CalibrationRequest = { type: 'calibration', options }
+    worker.postMessage(request)
+  })
+}
+
 export function openPdfTab(): Window | null {
   const tab = window.open('', '_blank')
   if (!tab) return null

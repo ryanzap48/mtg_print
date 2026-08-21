@@ -11,6 +11,8 @@ interface Props {
   slotCount: number
   pages: number
   perSheet: number
+  onCalibrate: () => void
+  calibrating: boolean
 }
 
 export function PrintOptionsDialog({
@@ -21,6 +23,8 @@ export function PrintOptionsDialog({
   slotCount,
   pages,
   perSheet,
+  onCalibrate,
+  calibrating,
 }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
 
@@ -154,6 +158,12 @@ export function PrintOptionsDialog({
               hint="Leaves Plains, Island, Swamp, Mountain, Forest, Wastes and their snow variants out of the PDF. Most players already own plenty."
             />
             <Toggle
+              checked={options.skipSideboard}
+              onChange={(v) => set('skipSideboard', v)}
+              label="Skip sideboard"
+              hint="Leaves anything under a Sideboard or Maybeboard heading out of the PDF. Commander and companion entries still print."
+            />
+            <Toggle
               checked={options.printDecklist}
               onChange={(v) => set('printDecklist', v)}
               label="Print decklist"
@@ -169,6 +179,18 @@ export function PrintOptionsDialog({
           <strong style={{ color: 'var(--text)' }}>When printing:</strong> set scale to “Actual
           size” or 100%, not “Fit to page”. Fitting silently shrinks the sheet and the cards will
           not fit sleeves.
+          <button
+            type="button"
+            className="btn btn-ghost mt-3 w-full px-3 py-2 text-xs sm:w-auto"
+            onClick={onCalibrate}
+            disabled={calibrating}
+          >
+            {calibrating ? 'Building test page…' : 'Print a test page first'}
+          </button>
+          <span className="mt-2 block">
+            One page with a 63 × 88 mm box and a ruler. Measure it before committing a whole deck
+            to paper.
+          </span>
         </div>
 
         <div className="mt-5 flex justify-end">

@@ -13,6 +13,8 @@ export interface PrintOptions {
   blackCorners: boolean
   /** Leave basic lands out of the PDF; most players already own plenty. */
   skipBasicLands: boolean
+  /** Leave sideboard and maybeboard cards out of the PDF. */
+  skipSideboard: boolean
   /** Append a text page listing the decklist. */
   printDecklist: boolean
   gapMm: CardGap
@@ -25,6 +27,7 @@ export const DEFAULT_PRINT_OPTIONS: PrintOptions = {
   quality: 'jpeg',
   blackCorners: false,
   skipBasicLands: false,
+  skipSideboard: false,
   printDecklist: false,
   gapMm: 0,
 }

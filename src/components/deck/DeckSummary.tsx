@@ -1,6 +1,7 @@
 interface Props {
   cardCount: number
-  skippedBasics: number
+  /** Cards left out by the skip options, whatever the reason. */
+  skipped: number
   perSheet: number
   totalCopies: number
   slotCount: number
@@ -16,7 +17,7 @@ interface Props {
 /** Counts plus the desktop action buttons, above the card grid. */
 export function DeckSummary({
   cardCount,
-  skippedBasics,
+  skipped,
   perSheet,
   totalCopies,
   slotCount,
@@ -34,13 +35,15 @@ export function DeckSummary({
       style={{ borderBottom: '1px solid var(--border)' }}
     >
       <p className="min-w-0 flex-1 text-sm">
-        <span className="font-medium">{cardCount} cards</span>
+        <span className="font-medium">
+          {cardCount} card{cardCount === 1 ? '' : 's'}
+        </span>
         <span style={{ color: 'var(--text-muted)' }}>
           {' '}
           | {totalCopies} cop{totalCopies === 1 ? 'y' : 'ies'} | {slotCount} to print | {pages} page
           {pages === 1 ? '' : 's'} of {perSheet}
           {doubleFacedCount > 0 && ` | ${doubleFacedCount} double-faced`}
-          {skippedBasics > 0 && ` | ${skippedBasics} basic${skippedBasics === 1 ? '' : 's'} skipped`}
+          {skipped > 0 && ` | ${skipped} skipped`}
         </span>
       </p>
       <button type="button" className="btn btn-ghost px-3 py-1.5 text-xs" onClick={onOpenOptions}>

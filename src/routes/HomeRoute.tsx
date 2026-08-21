@@ -4,22 +4,30 @@ import { DeckGrid } from '../components/deck/DeckGrid'
 import { DeckSummary } from '../components/deck/DeckSummary'
 import { UnresolvedCards } from '../components/deck/UnresolvedCards'
 import { SavedDecks } from '../components/deck/SavedDecks'
+import { DeckFilter } from '../components/deck/DeckFilter'
 import { PrintOptionsDialog } from '../components/print/PrintOptionsDialog'
 import { PrintActionBar } from '../components/print/PrintActionBar'
 import { usePdfExport } from '../hooks/usePdfExport'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { buildSlots, isBasicLand, isDoubleFaced, pageCount } from '../lib/deck/slots'
 import { pageGeometry } from '../lib/print/geometry'
-import { progressLabel } from '../lib/print/exportPdf'
+import {
+  generateCalibrationPdf,
+  openPdfTab,
+  progressLabel,
+  showPdf,
+} from '../lib/print/exportPdf'
 import { DEFAULT_PRINT_OPTIONS, type PrintOptions } from '../lib/print/types'
 import { useDeckSession } from '../state/DeckSession'
 
 const OPTIONS_STORAGE_KEY = 'mtg-print:options'
+/** Sections left out when "skip sideboard" is on. Commander entries always print. */
+const SKIPPED_SECTIONS = new Set(['sideboard', 'maybeboard'])
 
 export function HomeRoute() {
   // Deck text, resolved cards and saved decks live above the routes, so they survive a trip
   // to About and back.
-  const { text, setText, deck, history, submit } = useDeckSession()
+  const { text, setText, deck, history, submit, loadSaved } = useDeckSession()
   // Merge over the defaults so options saved before a new setting existed still work.
   const [options, setOptions] = usePersistentState<PrintOptions>(
     OPTIONS_STORAGE_KEY,
@@ -27,16 +35,29 @@ export function HomeRoute() {
     (stored) => ({ ...DEFAULT_PRINT_OPTIONS, ...(stored as Partial<PrintOptions>) }),
   )
   const [optionsOpen, setOptionsOpen] = useState(false)
+  const [filter, setFilter] = useState('')
+  const [calibrating, setCalibrating] = useState(false)
 
   const { exportPdf, cancelExport, progress, error: exportError } = usePdfExport()
 
   // Skipping basics changes the sheet, so apply it here rather than inside the worker: the
   // counts on screen then match the PDF you actually get.
   const printedItems = useMemo(
-    () => (deck.items ?? []).filter((i) => !(options.skipBasicLands && isBasicLand(i.card))),
-    [deck.items, options.skipBasicLands],
+    () =>
+      (deck.items ?? []).filter(
+        (i) =>
+          !(options.skipBasicLands && isBasicLand(i.card)) &&
+          !(options.skipSideboard && SKIPPED_SECTIONS.has(i.entry.section)),
+      ),
+    [deck.items, options.skipBasicLands, options.skipSideboard],
   )
-  const skippedBasics = (deck.items?.length ?? 0) - printedItems.length
+  const skipped = (deck.items?.length ?? 0) - printedItems.length
+
+  // The filter is presentation only: `printedItems` still drives the slots and the PDF.
+  const visibleItems = useMemo(() => {
+    const q = filter.trim().toLowerCase()
+    return q ? printedItems.filter((i) => i.card.name.toLowerCase().includes(q)) : printedItems
+  }, [printedItems, filter])
 
   const slots = useMemo(
     () => buildSlots(printedItems.map((i) => ({ entryKey: i.key, qty: i.qty, card: i.card }))),
@@ -80,7 +101,7 @@ export function HomeRoute() {
 
       <SavedDecks
         decks={history.decks}
-        onLoad={(saved) => setText(saved.text)}
+        onLoad={(saved) => loadSaved(saved.text)}
         onForget={history.forget}
       />
 
@@ -102,7 +123,7 @@ export function HomeRoute() {
         <section className="mt-6">
           <DeckSummary
             cardCount={printedItems.length}
-            skippedBasics={skippedBasics}
+            skipped={skipped}
             perSheet={geo.perSheet}
             totalCopies={totalCopies}
             slotCount={slots.length}
@@ -114,7 +135,15 @@ export function HomeRoute() {
             downloadLabel={progress ? progressLabel(progress) : 'Download PDF'}
             downloading={Boolean(progress)}
           />
-          <DeckGrid items={printedItems} onVersionChange={deck.setCard} />
+          {printedItems.length >= 10 && (
+            <DeckFilter
+              value={filter}
+              onChange={setFilter}
+              shown={visibleItems.length}
+              total={printedItems.length}
+            />
+          )}
+          <DeckGrid items={visibleItems} onVersionChange={deck.setCard} />
         </section>
       )}
 
@@ -139,6 +168,18 @@ export function HomeRoute() {
         slotCount={slots.length}
         pages={pages}
         perSheet={geo.perSheet}
+        calibrating={calibrating}
+        onCalibrate={async () => {
+          const tab = openPdfTab()
+          setCalibrating(true)
+          try {
+            showPdf(await generateCalibrationPdf(options), 'mtg-print-calibration.pdf', tab)
+          } catch {
+            tab?.close()
+          } finally {
+            setCalibrating(false)
+          }
+        }}
       />
     </main>
   )

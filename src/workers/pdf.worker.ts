@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb } from '@cantoo/pdf-lib'
 import { MM_TO_PT, PAPER_PT, pageGeometry } from '../lib/print/geometry'
 import { composeSheet } from '../lib/print/sheet'
 import { fetchArt } from '../lib/net/fetchArt'
+import { drawCalibrationPage } from '../lib/print/calibration'
 import type { PrintOptions } from '../lib/print/types'
 
 export interface WorkerSlot {
@@ -18,6 +19,14 @@ export interface GenerateRequest {
   /** Lines for the optional decklist page, already formatted for display. */
   decklist: string[]
 }
+
+/** Builds the one-page printer test sheet. Handled here so pdf-lib stays out of the main bundle. */
+export interface CalibrationRequest {
+  type: 'calibration'
+  options: PrintOptions
+}
+
+export type WorkerRequest = GenerateRequest | CalibrationRequest
 
 export type WorkerMessage =
   | { type: 'progress'; phase: 'download' | 'embed' | 'draw'; done: number; total: number }
@@ -35,10 +44,12 @@ const ART_DEPS = {
   caches: typeof caches !== 'undefined' ? caches : undefined,
 }
 const JPEG_QUALITY = 0.92
-self.onmessage = async (event: MessageEvent<GenerateRequest>) => {
-  if (event.data?.type !== 'generate') return
+self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
+  const request = event.data
+  if (request?.type !== 'generate' && request?.type !== 'calibration') return
   try {
-    const { bytes, pages } = await generate(event.data)
+    const { bytes, pages } =
+      request.type === 'calibration' ? await calibrate(request) : await generate(request)
     const buffer = bytes.buffer.slice(
       bytes.byteOffset,
       bytes.byteOffset + bytes.byteLength) as ArrayBuffer
@@ -46,6 +57,16 @@ self.onmessage = async (event: MessageEvent<GenerateRequest>) => {
   } catch (err) {
     post({ type: 'error', message: err instanceof Error ? err.message : String(err) })
   }
+}
+
+async function calibrate({
+  options,
+}: CalibrationRequest): Promise<{ bytes: Uint8Array; pages: number }> {
+  const pdf = await PDFDocument.create()
+  pdf.setTitle('MTG Print Proxy | printer calibration')
+  pdf.setCreator('MTG Print Proxy')
+  await drawCalibrationPage(pdf, options)
+  return { bytes: await pdf.save(), pages: 1 }
 }
 
 function post(message: WorkerMessage, transfer: Transferable[] = []) {
