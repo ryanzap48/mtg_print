@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { CardGap, CutMarkStyle, PaperSize, PrintOptions, Quality } from '../../lib/print/types'
 import { CARD_H_MM, CARD_W_MM, MM_TO_PT, PAPER_ORDER, PAPER_PT, pageGeometry } from '../../lib/print/geometry'
+import { useScrollLock } from '../../hooks/useScrollLock'
 
 interface Props {
   open: boolean
@@ -30,6 +31,10 @@ export function PrintOptionsDialog({
     else if (!open && dialog.open) dialog.close()
   }, [open])
 
+  // showModal() blocks interaction behind the dialog but does not stop the page scrolling,
+  // so the list underneath still moves under a scroll or a trackpad swipe.
+  useScrollLock(open)
+
   const geo = pageGeometry(options.paper, options.gapMm)
   const marginX = geo.marginX / MM_TO_PT
   const marginY = geo.marginY / MM_TO_PT
@@ -44,13 +49,8 @@ export function PrintOptionsDialog({
         // Clicking the backdrop (the dialog element itself, outside its content) closes.
         if (e.target === ref.current) onClose()
       }}
-      className="m-0 max-h-[92dvh] w-full max-w-none overflow-y-auto rounded-t-2xl p-0 backdrop:bg-black/50 sm:m-auto sm:max-w-3xl sm:rounded-2xl"
-      style={{
-        background: 'var(--surface)',
-        color: 'var(--text)',
-        marginTop: 'auto',
-        marginBottom: 0,
-      }}
+      className="mx-0 mt-auto mb-0 max-h-[92dvh] w-full max-w-none overflow-y-auto rounded-t-2xl p-0 backdrop:bg-black/50 sm:mx-auto sm:my-auto sm:max-h-[88dvh] sm:max-w-3xl sm:rounded-2xl"
+      style={{ background: 'var(--surface)', color: 'var(--text)' }}
     >
       <div className="p-5 sm:p-7">
         <h2 className="text-lg font-bold">Print options</h2>

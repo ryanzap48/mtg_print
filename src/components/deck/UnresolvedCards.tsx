@@ -109,7 +109,7 @@ function UnresolvedRow({
                   type="button"
                   onClick={() => onResolve(card)}
                   title={versionLabel(card)}
-                  className="block w-28 overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-2 hover:ring-current sm:w-40"
+                  className="block w-36 overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-2 hover:ring-current sm:w-52"
                   style={{ aspectRatio: 'var(--aspect-card)' }}
                 >
                   {src && (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { INFO_PAGES } from './navigation'
+import { useScrollLock } from '../../hooks/useScrollLock'
 import { Logo } from '../ui/Logo'
 
 export function NavBar() {
@@ -13,14 +14,11 @@ export function NavBar() {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
     document.addEventListener('keydown', onKey)
-    // The overlay covers the viewport, so the page behind it must not scroll.
-    const previous = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = previous
-    }
+    return () => document.removeEventListener('keydown', onKey)
   }, [open])
+
+  // The overlay covers the viewport, so the page behind it must not scroll.
+  useScrollLock(open)
 
   return (
     <nav style={{ background: 'var(--nav)', color: 'var(--nav-text)' }}>

@@ -28,7 +28,7 @@ export function TermsRoute() {
         </Li>
         <Li>
           Do not use printed output in sanctioned tournament play, see the{' '}
-          <a href="/legal.html" className="underline underline-offset-2">
+          <a href="/legal" className="underline underline-offset-2">
             legal notices
           </a>
           .

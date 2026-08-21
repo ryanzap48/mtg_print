@@ -34,7 +34,7 @@ export function AboutRoute() {
       </List>
       <p>
         Proxies printed here are for playtesting and casual games. Please read the{' '}
-        <a href="/legal.html" className="underline underline-offset-2">
+        <a href="/legal" className="underline underline-offset-2">
           legal notices
         </a>{' '}
         before using them anywhere.

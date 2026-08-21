@@ -54,7 +54,7 @@ export function PrivacyRoute() {
           <strong>Scryfall</strong>, your browser requests card data and images directly from{' '}
           <Code>api.scryfall.com</Code> and <Code>cards.scryfall.io</Code>. Scryfall therefore
           receives your IP address and can see which cards you look up. See{' '}
-          <Ext href="https://scryfall.com/docs/privacy-policy">Scryfall’s privacy policy</Ext>.
+          <Ext href="https://scryfall.com/docs/privacy">Scryfall’s privacy policy</Ext>.
         </Li>
         <Li>
           <strong>Our hosting provider</strong>, like any website host, it records standard server

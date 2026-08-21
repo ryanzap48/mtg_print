@@ -176,18 +176,31 @@ function hasImage(card: ScryfallCard): boolean {
 /** Free-text fallback used when a decklist line resolves to nothing. */
 export async function searchByName(name: string): Promise<ScryfallCard[]> {
   const q = encodeURIComponent(`!"${name.replace(/"/g, '')}"`)
-  const res = await fetch(`${API}/cards/search?q=${q}&unique=prints&order=released`, {
+  // `unique=cards` collapses every printing of a card down to one result. Picking the right
+  // card is the job here; picking the right printing is what the version dropdown is for.
+  const res = await fetch(`${API}/cards/search?q=${q}&unique=cards&order=released`, {
     headers: JSON_HEADERS,
   })
   if (!res.ok) {
     // Fall back to a fuzzy search when the exact-name search finds nothing.
-    const fuzzy = await fetch(`${API}/cards/search?q=${encodeURIComponent(name)}&unique=prints`, {
+    const fuzzy = await fetch(`${API}/cards/search?q=${encodeURIComponent(name)}&unique=cards`, {
       headers: JSON_HEADERS,
     })
     if (!fuzzy.ok) return []
     const payload = (await fuzzy.json()) as { data: ScryfallCard[] }
-    return payload.data.filter(hasImage)
+    return dedupeByName(payload.data.filter(hasImage))
   }
   const payload = (await res.json()) as { data: ScryfallCard[] }
-  return payload.data.filter((c) => !c.digital && hasImage(c))
+  return dedupeByName(payload.data.filter((c) => !c.digital && hasImage(c)))
+}
+
+/** Belt and braces: keep the first card for each distinct name whatever the API returns. */
+function dedupeByName(cards: ScryfallCard[]): ScryfallCard[] {
+  const seen = new Set<string>()
+  return cards.filter((c) => {
+    const key = c.name.toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
