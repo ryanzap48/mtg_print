@@ -176,9 +176,11 @@ export function PrintOptionsDialog({
           className="mt-6 rounded-lg p-3 text-xs/5"
           style={{ background: 'var(--surface-sunken)', color: 'var(--text-muted)' }}
         >
-          <strong style={{ color: 'var(--text)' }}>When printing:</strong> set scale to “Actual
-          size” or 100%, not “Fit to page”. Fitting silently shrinks the sheet and the cards will
-          not fit sleeves.
+          <p>
+            <strong style={{ color: 'var(--text)' }}>When printing:</strong> set scale to “Actual
+            size” or 100%, not “Fit to page”. Fitting silently shrinks the sheet and the cards
+            will not fit sleeves.
+          </p>
           <button
             type="button"
             className="btn btn-ghost mt-3 w-full px-3 py-2 text-xs sm:w-auto"
@@ -187,10 +189,10 @@ export function PrintOptionsDialog({
           >
             {calibrating ? 'Building test page…' : 'Print a test page first'}
           </button>
-          <span className="mt-2 block">
+          <p className="mt-2">
             One page with a 63 × 88 mm box and a ruler. Measure it before committing a whole deck
             to paper.
-          </span>
+          </p>
         </div>
 
         <div className="mt-5 flex justify-end">
@@ -244,16 +246,21 @@ function Toggle({
   hint: string
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 size-4 shrink-0 accent-neutral-900"
-      />
-      <span>
+    <label className="block cursor-pointer">
+      <span className="flex items-center gap-2.5">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="size-4 shrink-0 accent-neutral-900"
+        />
         <span className="text-sm font-semibold">{label}</span>
-        <Hint>{hint}</Hint>
+      </span>
+      <span
+        className="mt-1.5 block pl-[calc(1rem+0.625rem)] text-xs/5"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        {hint}
       </span>
     </label>
   )
@@ -272,11 +279,11 @@ function Segmented<T extends string | number>({
 }) {
   return (
     <div
-      className="grid gap-1 rounded-lg p-1"
+      className="grid gap-px overflow-hidden rounded-lg"
       style={{
         gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-        background: 'var(--surface-sunken)',
-        border: '1px solid var(--border)',
+        background: 'var(--border-strong)',
+        border: '1px solid var(--border-strong)',
       }}
     >
       {items.map((item) => {
@@ -287,8 +294,12 @@ function Segmented<T extends string | number>({
             type="button"
             aria-pressed={active}
             onClick={() => onChange(item.value)}
-            className="rounded-md px-2 py-1.5 text-xs font-semibold transition-colors"
-            style={active ? { background: 'var(--text)', color: '#fff' } : { color: 'var(--text-muted)' }}
+            className="px-2 py-2 text-xs font-semibold transition-colors"
+            style={
+              active
+                ? { background: 'var(--text)', color: '#fff' }
+                : { background: 'var(--surface)', color: 'var(--text-muted)' }
+            }
           >
             {item.label}
           </button>
