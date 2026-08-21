@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Tailwind 4 is configured in CSS — no tailwind.config.js. */
+/* Tailwind 4 is configured in CSS, no tailwind.config.js. */
 @theme {
   /* A Magic card's aspect ratio, used for every image box and placeholder. */
   --aspect-card: 63 / 88;
@@ -24,7 +24,7 @@
 
   html {
     -webkit-text-size-adjust: 100%;
-    /* `clip` rather than `hidden` — it cannot be scrolled into, and unlike `hidden` it does
+    /* `clip` rather than `hidden`, it cannot be scrolled into, and unlike `hidden` it does
        not silently turn descendants' `position: sticky` into a no-op. */
     overflow-x: clip;
   }
@@ -76,7 +76,7 @@
 }
 
 @layer utilities {
-  /* Skip layout and paint for offscreen tiles — meaningful at ~100 cards. */
+  /* Skip layout and paint for offscreen tiles, meaningful at ~100 cards. */
   .cv-auto {
     content-visibility: auto;
     contain-intrinsic-size: auto 260px;

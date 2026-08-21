@@ -21,7 +21,7 @@ export function List({ children }: { children: ReactNode }) {
 
 export function Li({ children }: { children: ReactNode }) {
   return (
-    <li className="relative pl-4 before:absolute before:left-0 before:content-['—']">{children}</li>
+    <li className="relative pl-4 before:absolute before:left-0 before:content-[', ']">{children}</li>
   )
 }
 

@@ -59,7 +59,7 @@ export function loadAnalytics() {
     window.dataLayer.push(arguments)
   }
 
-  // Consent Mode v2. Advertising signals stay denied permanently — this site does no ads.
+  // Consent Mode v2. Advertising signals stay denied permanently, this site does no ads.
   window.gtag('consent', 'default', {
     ad_storage: 'denied',
     ad_user_data: 'denied',
@@ -78,8 +78,8 @@ export function loadAnalytics() {
   // carried over from Universal Analytics).
   //
   // send_page_view:false hands page-view control entirely to the app. Left on, gtag reports
-  // the landing page itself AND reacts to each client-side route change, which — combined
-  // with the app's own trackPageView call — recorded every navigated route twice.
+  // the landing page itself AND reacts to each client-side route change, which, combined
+  // with the app's own trackPageView call, recorded every navigated route twice.
   window.gtag('config', GA_ID, { send_page_view: false })
   sendPageView(window.location.pathname, document.title)
 }
@@ -87,8 +87,8 @@ export function loadAnalytics() {
 /**
  * Records a page view for a client-side route change.
  *
- * The automatic page view is switched off in `config`, so every view — including the landing
- * page — is sent from here. Callers must skip the initial render: loadAnalytics() already
+ * The automatic page view is switched off in `config`, so every view, including the landing
+ * page, is sent from here. Callers must skip the initial render: loadAnalytics() already
  * reports the page that was open when consent was granted.
  */
 export function trackPageView(path: string, title: string) {
@@ -99,7 +99,7 @@ export function trackPageView(path: string, title: string) {
 /**
  * NOTE: GA4's Enhanced Measurement setting "Page changes based on browser history events"
  * ALSO emits a page_view on every client-side navigation, which would double-count each route.
- * It cannot be suppressed from here — it reacts to history.pushState itself, not to this
+ * It cannot be suppressed from here, it reacts to history.pushState itself, not to this
  * event. Turn it off in GA4: Admin -> Data streams -> your web stream -> Enhanced measurement
  * -> gear icon -> untick "Page changes based on browser history events". Relying on it alone
  * instead of this function was measured to be unreliable, dropping routes entirely.

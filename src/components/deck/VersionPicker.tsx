@@ -16,7 +16,7 @@ export function versionLabel(card: ScryfallCard): string {
 }
 
 /**
- * A native <select> — on phones this becomes the platform's own picker, which handles a
+ * A native <select>, on phones this becomes the platform's own picker, which handles a
  * 130-printing card far better than any custom popover, and it is keyboard accessible for
  * free. Printings are fetched on first interaction: eagerly loading them for every card in a
  * 100-card deck would mean ~100 extra requests for a control most cards never open.

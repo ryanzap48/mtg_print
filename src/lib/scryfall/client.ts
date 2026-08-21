@@ -45,8 +45,7 @@ function identifierFor(entry: DeckEntry): CardIdentifier {
  */
 export async function resolveDeck(
   entries: DeckEntry[],
-  { signal, onProgress }: { signal?: AbortSignal; onProgress?: (p: ResolveProgress) => void } = {},
-): Promise<ResolveResult> {
+  { signal, onProgress }: { signal?: AbortSignal; onProgress?: (p: ResolveProgress) => void } = {}): Promise<ResolveResult> {
   const byKey = new Map<string, ScryfallCard>()
   const needed: DeckEntry[] = []
 
@@ -132,7 +131,7 @@ export async function resolveDeck(
 
 /**
  * Every printing of a card, for the version dropdown. Fetched lazily on first open rather than
- * up front — prefetching would mean ~100 extra requests for a feature most cards never use.
+ * up front, prefetching would mean ~100 extra requests for a feature most cards never use.
  */
 export async function fetchPrintings(card: ScryfallCard): Promise<ScryfallCard[]> {
   const cacheId = card.oracle_id ?? card.id

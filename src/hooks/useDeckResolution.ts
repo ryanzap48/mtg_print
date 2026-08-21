@@ -54,16 +54,8 @@ export function useDeckResolution() {
     }
   }, [])
 
-  const setQty = useCallback((key: string, qty: number) => {
-    setItems((prev) => prev?.map((i) => (i.key === key ? { ...i, qty: Math.max(1, qty) } : i)) ?? null)
-  }, [])
-
   const setCard = useCallback((key: string, card: ScryfallCard) => {
     setItems((prev) => prev?.map((i) => (i.key === key ? { ...i, card } : i)) ?? null)
-  }, [])
-
-  const remove = useCallback((key: string) => {
-    setItems((prev) => prev?.filter((i) => i.key !== key) ?? null)
   }, [])
 
   const addResolved = useCallback((entry: DeckEntry, card: ScryfallCard) => {
@@ -82,9 +74,7 @@ export function useDeckResolution() {
     error,
     isResolving,
     resolve,
-    setQty,
     setCard,
-    remove,
     addResolved,
     dismissUnresolved,
     setError,

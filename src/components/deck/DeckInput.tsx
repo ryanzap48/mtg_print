@@ -1,5 +1,3 @@
-import { useRef } from 'react'
-
 const SAMPLE = `1 Monk Gyatso (TLE) 81
 1 Ancient Tomb (EOS) 1
 1 Deserted Temple (MH3) 301 *F*
@@ -18,7 +16,6 @@ interface Props {
 }
 
 export function DeckInput({ value, onChange, onSubmit, pending }: Props) {
-  const ref = useRef<HTMLTextAreaElement>(null)
   const lineCount = value.split('\n').filter((l) => l.trim()).length
 
   return (
@@ -43,10 +40,9 @@ export function DeckInput({ value, onChange, onSubmit, pending }: Props) {
             type="button"
             className="shrink-0 text-xs underline underline-offset-2 hover:opacity-60"
             style={{ color: 'var(--text-muted)' }}
-            onClick={() => {
-              onChange(SAMPLE)
-              ref.current?.focus()
-            }}
+            // Deliberately does not focus the textarea: focusing scrolls it into view and
+            // makes mobile browsers zoom to the caret.
+            onClick={() => onChange(SAMPLE)}
           >
             Load a sample
           </button>
@@ -54,7 +50,6 @@ export function DeckInput({ value, onChange, onSubmit, pending }: Props) {
 
         <textarea
           id="decklist"
-          ref={ref}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {

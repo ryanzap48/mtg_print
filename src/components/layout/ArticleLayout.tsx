@@ -2,13 +2,13 @@ import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { INFO_PAGES } from './navigation'
 
-/** Fill this in before publishing — GDPR expects a reachable controller contact. */
+/** Fill this in before publishing, GDPR expects a reachable controller contact. */
 export const CONTACT_EMAIL = 'zapps4848@gmail.com'
 export const LAST_UPDATED = '20 August 2026'
 
 /**
  * Shell for the four prose pages. The column is centred on the page (`mx-auto`) while its
- * contents stay left-aligned — centred multi-line prose is hard to read.
+ * contents stay left-aligned, centred multi-line prose is hard to read.
  */
 export function ArticleLayout({ title, children }: { title: string; children: ReactNode }) {
   return (

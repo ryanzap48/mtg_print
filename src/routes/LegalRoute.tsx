@@ -10,7 +10,7 @@ export function LegalRoute() {
         cards publicly released by Wizards of the Coast” (MTR 3.3). Printed proxies are not
         Authorized Game Cards and are prohibited in all sanctioned events. Only a Head Judge may
         issue a proxy, and only for a card damaged during that tournament (MTR 3.4). Casual
-        playtesting, cubes, and Commander pods are up to the people you play with — ask first.
+        playtesting, cubes, and Commander pods are up to the people you play with, ask first.
       </p>
       <p>
         <strong style={{ color: 'var(--text)' }}>Personal use only.</strong> Do not sell, trade, or

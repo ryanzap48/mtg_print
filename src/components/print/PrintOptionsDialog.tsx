@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import type { CutMarkStyle, PaperSize, PrintOptions, Quality } from '../../lib/print/types'
-import { PAPER_PT, CARD_H_MM, CARD_W_MM, MM_TO_PT } from '../../lib/print/geometry'
+import type { CardGap, CutMarkStyle, PaperSize, PrintOptions, Quality } from '../../lib/print/types'
+import { CARD_H_MM, CARD_W_MM, MM_TO_PT, PAPER_ORDER, PAPER_PT, pageGeometry } from '../../lib/print/geometry'
 
 interface Props {
   open: boolean
@@ -9,9 +9,18 @@ interface Props {
   onClose: () => void
   slotCount: number
   pages: number
+  perSheet: number
 }
 
-export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount, pages }: Props) {
+export function PrintOptionsDialog({
+  open,
+  options,
+  onChange,
+  onClose,
+  slotCount,
+  pages,
+  perSheet,
+}: Props) {
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -21,9 +30,11 @@ export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount
     else if (!open && dialog.open) dialog.close()
   }, [open])
 
-  const geo = PAPER_PT[options.paper]
-  const marginX = (geo.w - 3 * CARD_W_MM * MM_TO_PT) / 2 / MM_TO_PT
-  const marginY = (geo.h - 3 * CARD_H_MM * MM_TO_PT) / 2 / MM_TO_PT
+  const geo = pageGeometry(options.paper, options.gapMm)
+  const marginX = geo.marginX / MM_TO_PT
+  const marginY = geo.marginY / MM_TO_PT
+  const set = <K extends keyof PrintOptions>(key: K, value: PrintOptions[K]) =>
+    onChange({ ...options, [key]: value })
 
   return (
     <dialog
@@ -33,7 +44,7 @@ export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount
         // Clicking the backdrop (the dialog element itself, outside its content) closes.
         if (e.target === ref.current) onClose()
       }}
-      className="m-0 w-full max-w-md rounded-t-2xl p-0 backdrop:bg-black/50 sm:m-auto sm:rounded-2xl"
+      className="m-0 max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-2xl p-0 backdrop:bg-black/50 sm:m-auto sm:rounded-2xl"
       style={{
         background: 'var(--surface)',
         color: 'var(--text)',
@@ -44,29 +55,51 @@ export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount
       <div className="p-5 sm:p-6">
         <h2 className="text-lg font-bold">Print options</h2>
         <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-          {slotCount} card{slotCount === 1 ? '' : 's'} · {pages} page{pages === 1 ? '' : 's'} · 9 per
-          page at 63 × 88 mm
+          {slotCount} card{slotCount === 1 ? '' : 's'} | {pages} page{pages === 1 ? '' : 's'} |{' '}
+          {perSheet} per page at {CARD_W_MM} × {CARD_H_MM} mm
         </p>
 
         <div className="mt-5 space-y-5">
           <Field label="Paper size">
             <Segmented<PaperSize>
               value={options.paper}
-              onChange={(paper) => onChange({ ...options, paper })}
+              onChange={(paper) => set('paper', paper)}
+              columns={3}
+              items={PAPER_ORDER.map((p) => ({
+                value: p,
+                label: PAPER_PT[p].label.split(',')[0],
+              }))}
+            />
+            <Hint>
+              {PAPER_PT[options.paper].label} | fits {geo.cols} × {geo.rows} = {geo.perSheet} cards
+              | margins {marginX.toFixed(1)} × {marginY.toFixed(1)} mm
+            </Hint>
+          </Field>
+
+          <Field label="Gap between cards">
+            <Segmented<CardGap>
+              value={options.gapMm}
+              onChange={(gapMm) => set('gapMm', gapMm)}
+              columns={4}
               items={[
-                { value: 'letter', label: 'US Letter' },
-                { value: 'a4', label: 'A4' },
+                { value: 0, label: 'None' },
+                { value: 0.2, label: '0.2 mm' },
+                { value: 0.3, label: '0.3 mm' },
+                { value: 1, label: '1 mm' },
               ]}
             />
             <Hint>
-              {geo.label} — margins {marginX.toFixed(1)} × {marginY.toFixed(1)} mm
+              {options.gapMm === 0
+                ? 'Cards butt together, so one cut separates two cards. Fits the most per page.'
+                : `A ${options.gapMm} mm channel between cards gives the blade somewhere to land, at the cost of a little space.`}
             </Hint>
           </Field>
 
           <Field label="Cut guides">
             <Segmented<CutMarkStyle>
               value={options.cutMarks}
-              onChange={(cutMarks) => onChange({ ...options, cutMarks })}
+              onChange={(cutMarks) => set('cutMarks', cutMarks)}
+              columns={3}
               items={[
                 { value: 'marks', label: 'Crop marks' },
                 { value: 'grid', label: 'Full grid' },
@@ -75,7 +108,7 @@ export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount
             />
             <Hint>
               {options.cutMarks === 'marks'
-                ? 'Short marks in the page margins — no ink lands on a card.'
+                ? 'Short marks in the page margins, so no ink lands on a card.'
                 : options.cutMarks === 'grid'
                   ? 'Lines across the whole sheet, easiest to follow with a trimmer.'
                   : 'No guides printed.'}
@@ -85,7 +118,8 @@ export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount
           <Field label="Image quality">
             <Segmented<Quality>
               value={options.quality}
-              onChange={(quality) => onChange({ ...options, quality })}
+              onChange={(quality) => set('quality', quality)}
+              columns={2}
               items={[
                 { value: 'jpeg', label: 'Compact' },
                 { value: 'png', label: 'Maximum' },
@@ -93,26 +127,37 @@ export function PrintOptionsDialog({ open, options, onChange, onClose, slotCount
             />
             <Hint>
               {options.quality === 'jpeg'
-                ? 'Re-encodes at JPEG quality 92 — about a quarter the file size, with no difference you can see at 300 DPI.'
+                ? 'Re-encodes at JPEG quality 92, about a quarter the file size, with no difference you can see at 300 DPI.'
                 : 'Embeds Scryfall’s original 300 DPI PNGs untouched. Roughly 4× the file size, and slower to build.'}
             </Hint>
           </Field>
 
-          <label className="flex cursor-pointer items-start gap-3">
-            <input
-              type="checkbox"
-              checked={options.bleed}
-              onChange={(e) => onChange({ ...options, bleed: e.target.checked })}
-              className="mt-0.5 size-4 shrink-0 accent-neutral-900"
+          <div className="space-y-3">
+            <Toggle
+              checked={options.blackCorners}
+              onChange={(v) => set('blackCorners', v)}
+              label="Black corners"
+              hint="Card art has transparent rounded corners. Filling them black makes a straight cut look like a black-bordered card instead of showing paper white."
             />
-            <span>
-              <span className="text-sm font-semibold">Bleed edge</span>
-              <Hint>
-                Scales each card 2% so a slightly off-centre cut still leaves no white edge. Trims
-                a sliver of the border.
-              </Hint>
-            </span>
-          </label>
+            <Toggle
+              checked={options.bleed}
+              onChange={(v) => set('bleed', v)}
+              label="Bleed edge"
+              hint="Scales each card 2% so a slightly off-centre cut still leaves no white edge. Trims a sliver of the border."
+            />
+            <Toggle
+              checked={options.skipBasicLands}
+              onChange={(v) => set('skipBasicLands', v)}
+              label="Skip basic lands"
+              hint="Leaves Plains, Island, Swamp, Mountain, Forest, Wastes and their snow variants out of the PDF. Most players already own plenty."
+            />
+            <Toggle
+              checked={options.printDecklist}
+              onChange={(v) => set('printDecklist', v)}
+              label="Print decklist"
+              hint="Adds a text page at the end listing every card, quantity, set and collector number."
+            />
+          </div>
         </div>
 
         <div
@@ -149,20 +194,49 @@ function Hint({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Segmented<T extends string>({
+function Toggle({
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  label: string
+  hint: string
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 size-4 shrink-0 accent-neutral-900"
+      />
+      <span>
+        <span className="text-sm font-semibold">{label}</span>
+        <Hint>{hint}</Hint>
+      </span>
+    </label>
+  )
+}
+
+function Segmented<T extends string | number>({
   value,
   onChange,
   items,
+  columns,
 }: {
   value: T
   onChange: (value: T) => void
   items: { value: T; label: string }[]
+  columns: number
 }) {
   return (
     <div
       className="grid gap-1 rounded-lg p-1"
       style={{
-        gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
         background: 'var(--surface-sunken)',
         border: '1px solid var(--border)',
       }}
@@ -171,16 +245,12 @@ function Segmented<T extends string>({
         const active = item.value === value
         return (
           <button
-            key={item.value}
+            key={String(item.value)}
             type="button"
             aria-pressed={active}
             onClick={() => onChange(item.value)}
             className="rounded-md px-2 py-1.5 text-xs font-semibold transition-colors"
-            style={
-              active
-                ? { background: 'var(--text)', color: '#fff' }
-                : { color: 'var(--text-muted)' }
-            }
+            style={active ? { background: 'var(--text)', color: '#fff' } : { color: 'var(--text-muted)' }}
           >
             {item.label}
           </button>

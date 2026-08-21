@@ -1,4 +1,3 @@
-import { CARDS_PER_SHEET } from '../print/geometry'
 import type { ScryfallCard } from '../scryfall/types'
 
 /** One physical thing to print: a single face of a single copy of a card. */
@@ -12,7 +11,7 @@ export interface PrintSlot {
 
 /**
  * A card has a genuinely separate printed back only when its second face carries its own
- * image. Testing for that image — rather than for a slash in the name or a layout whitelist —
+ * image. Testing for that image, rather than for a slash in the name or a layout whitelist , 
  * is what keeps `adventure` (Ishgard, the Holy See / Faith & Grief) and `saga` (Urza's Saga)
  * as single cards while correctly splitting `transform`, `modal_dfc`, `double_faced_token`
  * and `reversible_card`.
@@ -83,6 +82,14 @@ export function buildSlots(sources: SlotSource[]): PrintSlot[] {
   return slots
 }
 
-export function pageCount(slotCount: number): number {
-  return Math.ceil(slotCount / CARDS_PER_SHEET)
+export function pageCount(slotCount: number, perSheet: number): number {
+  return perSheet > 0 ? Math.ceil(slotCount / perSheet) : 0
+}
+
+/**
+ * Basic lands, including the snow variants. Scryfall types them "Basic Land , Plains" and
+ * "Basic Snow Land , Plains", so a leading "Basic" is the reliable test.
+ */
+export function isBasicLand(card: ScryfallCard): boolean {
+  return /^basic\b/i.test(card.type_line ?? '')
 }

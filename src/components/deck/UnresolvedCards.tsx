@@ -47,7 +47,7 @@ export function UnresolvedCards({ entries, invalidLines, onResolve, onDismiss }:
         {invalidLines.map((line, i) => (
           <li key={`invalid-${i}`} className="text-xs">
             <span className="font-mono break-all">{line}</span>
-            <span className="opacity-70"> — not a readable card line</span>
+            <span className="opacity-70">, not a readable card line</span>
           </li>
         ))}
       </ul>

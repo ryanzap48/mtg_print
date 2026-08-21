@@ -7,7 +7,7 @@ export function AboutRoute() {
       <p>
         MTG Print Proxy turns a decklist into a print-ready PDF. Paste a list in MTG Arena or
         Moxfield format, pick the printing you want for any card, and download a sheet laid out 9
-        cards to a page at true size — <strong>63 × 88 mm</strong>, the real dimensions of a Magic
+        cards to a page at true size, <strong>63 × 88 mm</strong>, the real dimensions of a Magic
         card.
       </p>
       <p>
@@ -21,7 +21,7 @@ export function AboutRoute() {
         </Li>
         <Li>
           <strong>Double-faced cards</strong> print both faces in adjacent slots. Cards that merely
-          have two names — adventures, sagas, split cards — stay a single card.
+          have two names, adventures, sagas, split cards, stay a single card.
         </Li>
         <Li>
           <strong>Quantities</strong> are respected, and repeated art is embedded once, so a deck

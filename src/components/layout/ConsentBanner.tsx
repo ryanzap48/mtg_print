@@ -3,7 +3,7 @@ import { analyticsAvailable, getConsent, setConsent } from '../../lib/analytics'
 
 /**
  * Consent gate for Google Analytics. Shown only when a measurement ID is configured and the
- * visitor has not chosen yet. "Reject" is given equal visual weight to "Accept" — regulators
+ * visitor has not chosen yet. "Reject" is given equal visual weight to "Accept", regulators
  * treat a hard-to-find or de-emphasised reject option as invalid consent.
  */
 export function ConsentBanner() {
@@ -34,7 +34,7 @@ export function ConsentBanner() {
       <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center">
         <p className="flex-1 text-xs/5">
           We’d like to use Google Analytics cookies to see which parts of the site get used.
-          They’re optional — the site works exactly the same if you decline, and your decklists
+          They’re optional, the site works exactly the same if you decline, and your decklists
           never leave your browser either way.{' '}
           <a href="/privacy.html" className="underline underline-offset-2">
             Privacy policy

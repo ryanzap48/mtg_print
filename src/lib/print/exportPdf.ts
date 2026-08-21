@@ -18,12 +18,13 @@ export function progressLabel(p: PdfProgress): string {
 }
 
 /**
- * Runs the whole build in a worker so a 100-card deck (~35 MB of art to fetch, decode and
+ * Runs the whole build in a worker so a 100-card deck (~95 MB of art to fetch, decode and
  * re-encode) never blocks the main thread.
  */
 export function generatePdf(
   slots: WorkerSlot[],
   options: PrintOptions,
+  decklist: string[],
   onProgress?: (p: PdfProgress) => void,
 ): { promise: Promise<Blob>; cancel: () => void } {
   const worker = new Worker(new URL('../../workers/pdf.worker.ts', import.meta.url), {
@@ -47,7 +48,7 @@ export function generatePdf(
       reject(new Error(e.message || 'The PDF worker failed unexpectedly.'))
       worker.terminate()
     }
-    const request: GenerateRequest = { type: 'generate', slots, options }
+    const request: GenerateRequest = { type: 'generate', slots, options, decklist }
     worker.postMessage(request)
   })
 

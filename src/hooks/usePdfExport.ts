@@ -10,7 +10,12 @@ export function usePdfExport() {
   const [error, setError] = useState<string>()
 
   const exportPdf = useCallback(
-    async (slots: PrintSlot[], cardsByEntry: Map<string, ScryfallCard>, options: PrintOptions) => {
+    async (
+      slots: PrintSlot[],
+      cardsByEntry: Map<string, ScryfallCard>,
+      options: PrintOptions,
+      decklist: string[],
+    ) => {
       if (!slots.length || progress) return
       setError(undefined)
 
@@ -23,7 +28,7 @@ export function usePdfExport() {
 
       setProgress({ phase: 'download', done: 0, total: workerSlots.length })
       try {
-        const { promise } = generatePdf(workerSlots, options, setProgress)
+        const { promise } = generatePdf(workerSlots, options, decklist, setProgress)
         downloadBlob(await promise, `mtg-print-${slots.length}-cards.pdf`)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Could not build the PDF.')
@@ -31,8 +36,7 @@ export function usePdfExport() {
         setProgress(null)
       }
     },
-    [progress],
-  )
+    [progress])
 
   return { exportPdf, progress, error }
 }

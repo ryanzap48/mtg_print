@@ -26,7 +26,7 @@ export function RootLayout() {
 function useRouteMeta() {
   const { pathname } = useLocation()
   const route = SITE_ROUTES.find((r) => r.path === pathname)
-  const title = route?.title ?? 'Page not found — MTG Print Proxy'
+  const title = route?.title ?? 'Page not found | MTG Print Proxy'
   useDocumentMeta({
     title,
     description: route?.description ?? 'That page does not exist on MTG Print Proxy.',

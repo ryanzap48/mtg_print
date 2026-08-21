@@ -7,7 +7,7 @@
  *   1 Emeria's Call / Emeria, Shattered Skyclave (ZNR) 12
  *   1 Sol Ring
  *
- * The set code + collector number is the authoritative key — the name is only ever used for
+ * The set code + collector number is the authoritative key, the name is only ever used for
  * display, or as a fallback identifier when no set is given. That is why names containing
  * commas and slashes need no special handling.
  */

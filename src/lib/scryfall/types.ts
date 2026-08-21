@@ -4,7 +4,7 @@ export interface ImageUris {
   small?: string
   normal?: string
   large?: string
-  /** 744x1040 — exactly 300 DPI at 63x88mm, so it maps 1:1 onto a printed card. */
+  /** 744x1040, exactly 300 DPI at 63x88mm, so it maps 1:1 onto a printed card. */
   png?: string
   art_crop?: string
   border_crop?: string

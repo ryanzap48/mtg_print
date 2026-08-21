@@ -8,7 +8,8 @@ import { PrintActionBar } from '../components/print/PrintActionBar'
 import { useDeckResolution } from '../hooks/useDeckResolution'
 import { usePdfExport } from '../hooks/usePdfExport'
 import { usePersistentState } from '../hooks/usePersistentState'
-import { buildSlots, isDoubleFaced, pageCount } from '../lib/deck/slots'
+import { buildSlots, isBasicLand, isDoubleFaced, pageCount } from '../lib/deck/slots'
+import { pageGeometry } from '../lib/print/geometry'
 import { progressLabel } from '../lib/print/exportPdf'
 import { DEFAULT_PRINT_OPTIONS, type PrintOptions } from '../lib/print/types'
 
@@ -17,38 +18,55 @@ const OPTIONS_STORAGE_KEY = 'mtg-print:options'
 
 export function HomeRoute() {
   const [text, setText] = usePersistentState<string>(DECK_STORAGE_KEY, '')
+  // Merge over the defaults so options saved before a new setting existed still work.
   const [options, setOptions] = usePersistentState<PrintOptions>(
     OPTIONS_STORAGE_KEY,
     DEFAULT_PRINT_OPTIONS,
+    (stored) => ({ ...DEFAULT_PRINT_OPTIONS, ...(stored as Partial<PrintOptions>) }),
   )
   const [optionsOpen, setOptionsOpen] = useState(false)
 
   const deck = useDeckResolution()
   const { exportPdf, progress, error: exportError } = usePdfExport()
 
+  // Skipping basics changes the sheet, so apply it here rather than inside the worker: the
+  // counts on screen then match the PDF you actually get.
+  const printedItems = useMemo(
+    () => (deck.items ?? []).filter((i) => !(options.skipBasicLands && isBasicLand(i.card))),
+    [deck.items, options.skipBasicLands],
+  )
+  const skippedBasics = (deck.items?.length ?? 0) - printedItems.length
+
   const slots = useMemo(
-    () =>
-      deck.items
-        ? buildSlots(deck.items.map((i) => ({ entryKey: i.key, qty: i.qty, card: i.card })))
-        : [],
-    [deck.items],
+    () => buildSlots(printedItems.map((i) => ({ entryKey: i.key, qty: i.qty, card: i.card }))),
+    [printedItems],
   )
   const totalCopies = useMemo(
-    () => deck.items?.reduce((sum, i) => sum + i.qty, 0) ?? 0,
-    [deck.items],
+    () => printedItems.reduce((sum, i) => sum + i.qty, 0),
+    [printedItems],
   )
   const cardsByEntry = useMemo(
-    () => new Map((deck.items ?? []).map((i) => [i.key, i.card])),
-    [deck.items],
+    () => new Map(printedItems.map((i) => [i.key, i.card])),
+    [printedItems],
   )
 
-  const pages = pageCount(slots.length)
-  const doubleFacedCount = deck.items?.filter((i) => isDoubleFaced(i.card)).length ?? 0
+  /** One line per card, in decklist order, for the optional printed listing. */
+  const decklistLines = useMemo(
+    () =>
+      printedItems.map((i) => {
+        const set = i.entry.set ? ` (${i.entry.set.toUpperCase()}) ${i.entry.collectorNumber}` : ''
+        return `${i.qty}  ${i.card.name}${set}`
+      }),
+    [printedItems],
+  )
+
+  const geo = pageGeometry(options.paper, options.gapMm)
+  const pages = pageCount(slots.length, geo.perSheet)
+  const doubleFacedCount = printedItems.filter((i) => isDoubleFaced(i.card)).length
   const hasResults = Boolean(deck.items?.length)
   const error = deck.error ?? exportError
 
-  const download = () => exportPdf(slots, cardsByEntry, options)
-  const downloadLabel = progress ? progressLabel(progress) : 'Download PDF'
+  const download = () => exportPdf(slots, cardsByEntry, options, decklistLines)
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -76,28 +94,29 @@ export function HomeRoute() {
       {hasResults && (
         <section className="mt-6">
           <DeckSummary
-            cardCount={deck.items!.length}
+            cardCount={printedItems.length}
+            skippedBasics={skippedBasics}
+            perSheet={geo.perSheet}
             totalCopies={totalCopies}
             slotCount={slots.length}
             pages={pages}
             doubleFacedCount={doubleFacedCount}
             onOpenOptions={() => setOptionsOpen(true)}
             onDownload={download}
-            downloadLabel={downloadLabel}
+            downloadLabel={progress ? progressLabel(progress) : 'Download PDF'}
             downloading={Boolean(progress)}
           />
-          <DeckGrid
-            items={deck.items!}
-            onQtyChange={deck.setQty}
-            onVersionChange={deck.setCard}
-            onRemove={deck.remove}
-          />
+          <DeckGrid items={printedItems} onVersionChange={deck.setCard} />
         </section>
       )}
 
       {hasResults && (
         <PrintActionBar
-          label={progress ? progressLabel(progress) : `Download PDF · ${pages} page${pages === 1 ? '' : 's'}`}
+          label={
+            progress
+              ? progressLabel(progress)
+              : `Download PDF | ${pages} page${pages === 1 ? '' : 's'}`
+          }
           disabled={Boolean(progress)}
           onDownload={download}
         />
@@ -110,6 +129,7 @@ export function HomeRoute() {
         onClose={() => setOptionsOpen(false)}
         slotCount={slots.length}
         pages={pages}
+        perSheet={geo.perSheet}
       />
     </main>
   )

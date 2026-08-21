@@ -27,7 +27,7 @@ export function TermsRoute() {
           genuine cards.
         </Li>
         <Li>
-          Do not use printed output in sanctioned tournament play — see the{' '}
+          Do not use printed output in sanctioned tournament play, see the{' '}
           <a href="/legal.html" className="underline underline-offset-2">
             legal notices
           </a>
