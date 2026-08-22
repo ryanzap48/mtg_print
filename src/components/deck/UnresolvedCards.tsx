@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
 import type { DeckEntry } from '../../lib/deck/parseDeck'
 import type { ScryfallCard } from '../../lib/scryfall/types'
-import { searchByName } from '../../lib/scryfall/client'
+import { RateLimitedError, searchByName } from '../../lib/scryfall/client'
 import { pickerImage } from '../../lib/deck/slots'
 import { versionLabel } from './VersionPicker'
 
@@ -62,16 +62,23 @@ function UnresolvedRow({
 }) {
   const [results, setResults] = useState<ScryfallCard[] | null>(null)
   const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string>()
   const [expanded, setExpanded] = useState(true)
   const listId = useId()
 
   async function search() {
     setSearching(true)
+    setSearchError(undefined)
     try {
       setResults(await searchByName(name))
       setExpanded(true)
-    } catch {
+    } catch (err) {
       setResults([])
+      setSearchError(
+        err instanceof RateLimitedError
+          ? err.message
+          : 'Could not reach Scryfall. Check your connection and try again.',
+      )
     } finally {
       setSearching(false)
     }
@@ -115,7 +122,9 @@ function UnresolvedRow({
         </button>
       </div>
 
-      {results && results.length === 0 && (
+      {searchError && <p className="mt-1 text-xs opacity-80">{searchError}</p>}
+
+      {!searchError && results && results.length === 0 && (
         <p className="mt-1 text-xs opacity-70">No cards found for “{name}”.</p>
       )}
 
@@ -128,14 +137,14 @@ function UnresolvedRow({
                 <button
                   type="button"
                   onClick={() => onResolve(card)}
-                  title={versionLabel(card)}
+                  title={`${card.name} | ${versionLabel(card)}`}
                   className="block w-44 overflow-hidden rounded-lg ring-1 ring-black/10 transition hover:ring-2 hover:ring-current sm:w-64"
                   style={{ aspectRatio: 'var(--aspect-card)' }}
                 >
                   {src && (
                     <img
                       src={src}
-                      alt={versionLabel(card)}
+                      alt={`${card.name} | ${versionLabel(card)}`}
                       loading="lazy"
                       className="h-full w-full object-cover"
                     />

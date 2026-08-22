@@ -39,15 +39,15 @@ function useDeckSessionValue() {
     submit(savedText)
   }
 
-  // Keep the saved copy in step while this deck is on screen. Only once a printing has
-  // actually been swapped, so an untouched deck keeps the text exactly as it was typed,
-  // including any comments or section headers.
-  const { items, printingsChanged } = deck
+  // Keep the saved copy in step while this deck is on screen: printing swaps and cards
+  // recovered from a failed lookup both count. Until something is actually edited the text is
+  // left exactly as it was typed, comments and section headers included.
+  const { items, deckEdited } = deck
   const { update } = history
   useEffect(() => {
-    if (!activeDeckId || !printingsChanged || !items?.length) return
+    if (!activeDeckId || !deckEdited || !items?.length) return
     update(activeDeckId, formatDeckText(items))
-  }, [activeDeckId, printingsChanged, items, update])
+  }, [activeDeckId, deckEdited, items, update])
 
   return useMemo(
     () => ({ text, setText, deck, history, submit, loadSaved, activeDeckId }),

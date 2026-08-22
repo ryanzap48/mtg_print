@@ -173,25 +173,113 @@ function hasImage(card: ScryfallCard): boolean {
   return Boolean(card.image_uris?.png ?? card.card_faces?.[0]?.image_uris?.png)
 }
 
-/** Free-text fallback used when a decklist line resolves to nothing. */
+/** Scryfall is asking us to slow down. Distinct from "that card does not exist". */
+export class RateLimitedError extends Error {
+  constructor() {
+    super('Scryfall is rate limiting requests. Wait a moment and try again.')
+  }
+}
+
+/** How many candidates the picker shows for a misspelling. */
+const MAX_SUGGESTIONS = 24
+
+/**
+ * Finds the card someone meant when a decklist line will not resolve.
+ *
+ * Tries the cheapest, most certain lookups first and only works harder if they come up empty:
+ *
+ *  1. exact name, which covers a wrong set code or collector number on a correct name
+ *  2. substring search, which covers a partial name
+ *  3. a misspelling, where neither of the above matches anything
+ *
+ * For step 3 Scryfall's own fuzzy endpoint is consulted, but its answer is treated as one
+ * candidate rather than as the answer: asked for "Sol Rng" it confidently returns "Oathsworn
+ * Giant". Candidates are also gathered by searching the longest word, and the whole set is
+ * ranked by how close each name is to what was typed, leaving the person to pick from pictures.
+ */
 export async function searchByName(name: string): Promise<ScryfallCard[]> {
-  const q = encodeURIComponent(`!"${name.replace(/"/g, '')}"`)
-  // `unique=cards` collapses every printing of a card down to one result. Picking the right
-  // card is the job here; picking the right printing is what the version dropdown is for.
-  const res = await fetch(`${API}/cards/search?q=${q}&unique=cards&order=released`, {
+  const typed = name.trim()
+  if (!typed) return []
+
+  const exact = await runSearch(`!"${typed.replace(/"/g, '')}"`)
+  if (exact.length) return exact.slice(0, MAX_SUGGESTIONS)
+
+  await sleep(REQUEST_DELAY_MS)
+  const substring = await runSearch(typed)
+  if (substring.length) return rankBySimilarity(substring, typed).slice(0, MAX_SUGGESTIONS)
+
+  // A misspelling: gather anything plausible, then rank it.
+  const candidates: ScryfallCard[] = []
+  await sleep(REQUEST_DELAY_MS)
+  const guess = await fuzzyNamed(typed)
+  if (guess) candidates.push(guess)
+
+  const longest = typed
+    .split(/\s+/)
+    .filter((w) => w.length >= 3)
+    .sort((a, b) => b.length - a.length)[0]
+  if (longest) {
+    await sleep(REQUEST_DELAY_MS)
+    candidates.push(...(await runSearch(longest)))
+  }
+
+  return rankBySimilarity(dedupeByName(candidates), typed).slice(0, MAX_SUGGESTIONS)
+}
+
+async function runSearch(query: string): Promise<ScryfallCard[]> {
+  const res = await fetch(
+    `${API}/cards/search?q=${encodeURIComponent(query)}&unique=cards&order=name`,
+    { headers: JSON_HEADERS },
+  )
+  // A 404 genuinely means no such card; a 429 means we asked too fast. Reporting the second as
+  // "no cards found" would send someone off to fix a decklist line that was never wrong.
+  if (res.status === 429) throw new RateLimitedError()
+  if (!res.ok) return []
+  const payload = (await res.json()) as { data?: ScryfallCard[] }
+  return dedupeByName((payload.data ?? []).filter((c) => !c.digital && hasImage(c)))
+}
+
+/** Scryfall's spelling-tolerant single-card lookup. Ambiguous or unknown names give nothing. */
+async function fuzzyNamed(name: string): Promise<ScryfallCard | null> {
+  const res = await fetch(`${API}/cards/named?fuzzy=${encodeURIComponent(name)}`, {
     headers: JSON_HEADERS,
   })
-  if (!res.ok) {
-    // Fall back to a fuzzy search when the exact-name search finds nothing.
-    const fuzzy = await fetch(`${API}/cards/search?q=${encodeURIComponent(name)}&unique=cards`, {
-      headers: JSON_HEADERS,
-    })
-    if (!fuzzy.ok) return []
-    const payload = (await fuzzy.json()) as { data: ScryfallCard[] }
-    return dedupeByName(payload.data.filter(hasImage))
+  if (res.status === 429) throw new RateLimitedError()
+  if (!res.ok) return null
+  const card = (await res.json()) as ScryfallCard
+  return hasImage(card) ? card : null
+}
+
+/** Closest spelling first, so the intended card is not buried in a long alphabetical list. */
+function rankBySimilarity(cards: ScryfallCard[], typed: string): ScryfallCard[] {
+  const target = typed.toLowerCase()
+  return [...cards].sort((a, b) => similarity(b.name, target) - similarity(a.name, target))
+}
+
+function similarity(candidate: string, target: string): number {
+  const name = candidate.toLowerCase()
+  // A name that simply contains what was typed beats what edit distance would suggest.
+  if (name.startsWith(target)) return 1
+  if (name.includes(target)) return 0.9
+  const distance = editDistance(name.slice(0, 64), target.slice(0, 64))
+  return 1 - distance / Math.max(name.length, target.length, 1)
+}
+
+/** Levenshtein distance, two rows rather than a full matrix. */
+function editDistance(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i]
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(
+        prev[j]! + 1,
+        row[j - 1]! + 1,
+        prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1),
+      )
+    }
+    prev = row
   }
-  const payload = (await res.json()) as { data: ScryfallCard[] }
-  return dedupeByName(payload.data.filter((c) => !c.digital && hasImage(c)))
+  return prev[b.length]!
 }
 
 /** Belt and braces: keep the first card for each distinct name whatever the API returns. */

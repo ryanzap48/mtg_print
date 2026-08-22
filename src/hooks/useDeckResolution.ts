@@ -3,6 +3,12 @@ import { parseDeck, type DeckEntry } from '../lib/deck/parseDeck'
 import { resolveDeck } from '../lib/scryfall/client'
 import type { ScryfallCard } from '../lib/scryfall/types'
 
+/** Entry keys start with the line's position in the submitted list; recover it for sorting. */
+function originalIndex(key: string): number {
+  const n = Number.parseInt(key, 10)
+  return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER
+}
+
 /** A parsed decklist line paired with the printing currently chosen for it. */
 export interface DeckItem {
   key: string
@@ -21,8 +27,11 @@ export function useDeckResolution() {
   const [invalidLines, setInvalidLines] = useState<string[]>([])
   const [error, setError] = useState<string>()
   const [isResolving, setIsResolving] = useState(false)
-  /** True once a printing has been swapped since this deck was resolved. */
-  const [printingsChanged, setPrintingsChanged] = useState(false)
+  /**
+   * True once the deck has been edited since it was resolved, either by swapping a printing or
+   * by recovering a card that failed to resolve. Drives whether the saved copy is rewritten.
+   */
+  const [deckEdited, setDeckEdited] = useState(false)
   const abortRef = useRef<AbortController>(null)
 
   const resolve = useCallback(async (text: string) => {
@@ -42,7 +51,7 @@ export function useDeckResolution() {
 
     setError(undefined)
     setIsResolving(true)
-    setPrintingsChanged(false)
+    setDeckEdited(false)
     try {
       const { resolved, unresolved: missing } = await resolveDeck(entries, {
         signal: controller.signal,
@@ -59,12 +68,22 @@ export function useDeckResolution() {
 
   const setCard = useCallback((key: string, card: ScryfallCard) => {
     setItems((prev) => prev?.map((i) => (i.key === key ? { ...i, card } : i)) ?? null)
-    setPrintingsChanged(true)
+    setDeckEdited(true)
   }, [])
 
+  /**
+   * Accepts a card chosen for a line that would not resolve, typically a mistyped name.
+   *
+   * It is put back where the line originally sat rather than appended, so the deck on screen
+   * and any decklist regenerated from it stay in the order that was submitted.
+   */
   const addResolved = useCallback((entry: DeckEntry, card: ScryfallCard) => {
-    setItems((prev) => [...(prev ?? []), { key: entry.key, entry, card, qty: entry.qty }])
+    setItems((prev) => {
+      const next = [...(prev ?? []), { key: entry.key, entry, card, qty: entry.qty }]
+      return next.sort((a, b) => originalIndex(a.key) - originalIndex(b.key))
+    })
     setUnresolved((prev) => prev.filter((e) => e.key !== entry.key))
+    setDeckEdited(true)
   }, [])
 
   const dismissUnresolved = useCallback((entry: DeckEntry) => {
@@ -77,7 +96,7 @@ export function useDeckResolution() {
     invalidLines,
     error,
     isResolving,
-    printingsChanged,
+    deckEdited,
     resolve,
     setCard,
     addResolved,
