@@ -9,6 +9,7 @@ interface Props {
   doubleFacedCount: number
   onOpenOptions: () => void
   onDownload: () => void
+  onShare: () => void
   onCancel: () => void
   downloadLabel: string
   downloading: boolean
@@ -25,6 +26,7 @@ export function DeckSummary({
   doubleFacedCount,
   onOpenOptions,
   onDownload,
+  onShare,
   onCancel,
   downloadLabel,
   downloading,
@@ -48,6 +50,14 @@ export function DeckSummary({
       </p>
       <button type="button" className="btn btn-ghost px-3 py-1.5 text-xs" onClick={onOpenOptions}>
         Options
+      </button>
+      <button
+        type="button"
+        className="btn btn-ghost px-3 py-1.5 text-xs"
+        onClick={onShare}
+        disabled={downloading}
+      >
+        Share
       </button>
       {downloading && (
         <button type="button" className="btn btn-ghost px-3 py-1.5 text-xs" onClick={onCancel}>

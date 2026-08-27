@@ -4,11 +4,13 @@ export function PrintActionBar({
   disabled,
   onDownload,
   onCancel,
+  onShare,
 }: {
   label: string
   disabled: boolean
   onDownload: () => void
   onCancel: () => void
+  onShare: () => void
 }) {
   return (
     <div
@@ -24,9 +26,13 @@ export function PrintActionBar({
         >
           {label}
         </button>
-        {disabled && (
+        {disabled ? (
           <button type="button" className="btn btn-ghost px-4" onClick={onCancel}>
             Cancel
+          </button>
+        ) : (
+          <button type="button" className="btn btn-ghost px-4" onClick={onShare}>
+            Share
           </button>
         )}
       </div>

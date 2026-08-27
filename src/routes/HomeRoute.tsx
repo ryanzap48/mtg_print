@@ -6,6 +6,7 @@ import { UnresolvedCards } from '../components/deck/UnresolvedCards'
 import { SavedDecks } from '../components/deck/SavedDecks'
 import { DeckFilter } from '../components/deck/DeckFilter'
 import { PrintOptionsDialog } from '../components/print/PrintOptionsDialog'
+import { ShareDialog } from '../components/print/ShareDialog'
 import { PrintActionBar } from '../components/print/PrintActionBar'
 import { usePdfExport } from '../hooks/usePdfExport'
 import { usePersistentState } from '../hooks/usePersistentState'
@@ -38,7 +39,9 @@ export function HomeRoute() {
   const [filter, setFilter] = useState('')
   const [calibrating, setCalibrating] = useState(false)
 
-  const { exportPdf, cancelExport, progress, error: exportError } = usePdfExport()
+  const { exportPdf, buildForShare, builtFile, saveBuiltFile, cancelExport, progress, error: exportError } =
+    usePdfExport()
+  const [shareOpen, setShareOpen] = useState(false)
 
   // Skipping basics changes the sheet, so apply it here rather than inside the worker: the
   // counts on screen then match the PDF you actually get.
@@ -90,6 +93,13 @@ export function HomeRoute() {
 
   const download = () => exportPdf(slots, cardsByEntry, options, decklistLines)
 
+  // Build first, then show the sheet. Opening it after an await would have lost the gesture
+  // the browser requires, so the dialog only offers "Send file" once the PDF is ready.
+  const share = async () => {
+    setShareOpen(true)
+    await buildForShare(slots, cardsByEntry, options, decklistLines)
+  }
+
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
       <DeckInput
@@ -131,6 +141,7 @@ export function HomeRoute() {
             doubleFacedCount={doubleFacedCount}
             onOpenOptions={() => setOptionsOpen(true)}
             onDownload={download}
+            onShare={share}
             onCancel={cancelExport}
             downloadLabel={progress ? progressLabel(progress) : 'Download PDF'}
             downloading={Boolean(progress)}
@@ -157,8 +168,19 @@ export function HomeRoute() {
           disabled={Boolean(progress)}
           onDownload={download}
           onCancel={cancelExport}
+          onShare={share}
         />
       )}
+
+      <ShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        file={builtFile}
+        building={Boolean(progress)}
+        progressLabel={progress ? progressLabel(progress) : undefined}
+        onSave={saveBuiltFile}
+        decklist={decklistLines.join('\n')}
+      />
 
       <PrintOptionsDialog
         open={optionsOpen}

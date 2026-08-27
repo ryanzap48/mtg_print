@@ -70,6 +70,15 @@ export function PrivacyRoute() {
         fine; it only exists so we can reply.
       </p>
 
+      <H2>Sharing a PDF</H2>
+      <p>
+        The PDF is built in your browser and stays there. Sharing it hands the file to your
+        device's own share sheet, which passes it directly to whichever app you choose. It is not
+        uploaded to this site, and there is no server here that could receive it. The social
+        buttons are different: they open that network in a new tab with a link to this site, and
+        carry no part of your deck.
+      </p>
+
       <H2>Your rights</H2>
       <p>
         If you are in the EU, UK, or a similar jurisdiction, you have the right to access, correct,
