@@ -77,9 +77,19 @@ export async function resolveDeck(
   const groups = [...unique.values()]
   const unresolvedKeys = new Set<string>()
 
+  // Chunks run a few at a time rather than one after another.
+  //
+  // A 97 card deck is two batches; sequentially that is two round trips plus a deliberate
+  // pause between them, and the whole grid waits on it. Three at once is still far inside
+  // Scryfall's ten-requests-per-second guidance and cuts the wait to roughly one round trip.
+  const CHUNK_CONCURRENCY = 3
+  const batches: (typeof groups)[] = []
   for (let i = 0; i < groups.length; i += MAX_IDENTIFIERS) {
+    batches.push(groups.slice(i, i + MAX_IDENTIFIERS))
+  }
+
+  const runBatch = async (chunk: typeof groups) => {
     signal?.throwIfAborted()
-    const chunk = groups.slice(i, i + MAX_IDENTIFIERS)
     const identifiers = chunk.map((group) => identifierFor(group[0]))
 
     const res = await fetch(`${API}/cards/collection`, {
@@ -114,9 +124,12 @@ export async function resolveDeck(
       }
       done += group.length
     }
-
     onProgress?.({ done, total: entries.length })
-    if (i + MAX_IDENTIFIERS < groups.length) await sleep(REQUEST_DELAY_MS)
+  }
+
+  for (let i = 0; i < batches.length; i += CHUNK_CONCURRENCY) {
+    await Promise.all(batches.slice(i, i + CHUNK_CONCURRENCY).map(runBatch))
+    if (i + CHUNK_CONCURRENCY < batches.length) await sleep(REQUEST_DELAY_MS)
   }
 
   const resolved: ResolvedEntry[] = []
@@ -133,7 +146,28 @@ export async function resolveDeck(
  * Every printing of a card, for the version dropdown. Fetched lazily on first open rather than
  * up front, prefetching would mean ~100 extra requests for a feature most cards never use.
  */
-export async function fetchPrintings(card: ScryfallCard): Promise<ScryfallCard[]> {
+/**
+ * Warms the printings cache for one card without returning anything.
+ *
+ * Reports whether it actually went to the network, so a background prefetch can pace itself
+ * against Scryfall's rate limit only when it needs to, and run at full speed through cards
+ * that are already cached.
+ */
+export async function prefetchPrintings(card: ScryfallCard): Promise<'cached' | 'fetched' | 'failed'> {
+  const cacheId = card.oracle_id ?? card.id
+  if (await getCachedPrints(cacheId)) return 'cached'
+  try {
+    await fetchPrintings(card, { firstPageOnly: true })
+    return 'fetched'
+  } catch {
+    return 'failed'
+  }
+}
+
+export async function fetchPrintings(
+  card: ScryfallCard,
+  { firstPageOnly = false }: { firstPageOnly?: boolean } = {},
+): Promise<ScryfallCard[]> {
   const cacheId = card.oracle_id ?? card.id
   const cached = await getCachedPrints(cacheId)
   if (cached) return cached
@@ -157,7 +191,9 @@ export async function fetchPrintings(card: ScryfallCard): Promise<ScryfallCard[]
       next_page?: string
     }
     all.push(...page.data)
-    next = page.has_more ? page.next_page : undefined
+    // A background warm-up stops at the first page: 175 printings covers every real card, and
+    // the handful that exceed it are not worth extra requests before anyone has clicked.
+    next = page.has_more && !firstPageOnly ? page.next_page : undefined
     if (next) await sleep(REQUEST_DELAY_MS)
   }
 

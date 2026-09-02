@@ -10,6 +10,7 @@ import { ShareDialog } from '../components/print/ShareDialog'
 import { PrintActionBar } from '../components/print/PrintActionBar'
 import { usePdfExport } from '../hooks/usePdfExport'
 import { usePersistentState } from '../hooks/usePersistentState'
+import { useDeckWarmup } from '../hooks/useDeckWarmup'
 import { buildSlots, isBasicLand, isDoubleFaced, pageCount } from '../lib/deck/slots'
 import { pageGeometry } from '../lib/print/geometry'
 import {
@@ -84,6 +85,10 @@ export function HomeRoute() {
       }),
     [printedItems],
   )
+
+  // Pull art and printing lists in just ahead of the viewport, so scrolling never lands on an
+  // empty frame and the version dropdowns open on data already in hand.
+  useDeckWarmup(useMemo(() => printedItems.map((i) => i.card), [printedItems]))
 
   const geo = pageGeometry(options.paper, options.gapMm)
   const pages = pageCount(slots.length, geo.perSheet)

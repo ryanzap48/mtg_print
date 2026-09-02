@@ -7,14 +7,23 @@ interface Props {
   card: ScryfallCard
   qty: number
   onVersionChange: (card: ScryfallCard) => void
+  /** Position in the grid; the first tiles are visible immediately and load eagerly. */
+  index: number
 }
+
+/**
+ * How many tiles to treat as above the fold. Two rows at the widest layout, which covers the
+ * first screenful on any size without eagerly pulling art nobody has scrolled to.
+ */
+const EAGER_TILES = 6
 
 /**
  * Quantity is display-only. Changing counts or removing cards is done by editing the decklist
  * and resubmitting, which keeps the list the single source of truth and frees the width for
  * the card name and printing picker.
  */
-export function CardTile({ card, qty, onVersionChange }: Props) {
+export function CardTile({ card, qty, onVersionChange, index }: Props) {
+  const eager = index < EAGER_TILES
   const [showBack, setShowBack] = useState(false)
   const twoFaced = isDoubleFaced(card)
   const front = displayImage(card, 'front')
@@ -36,6 +45,7 @@ export function CardTile({ card, qty, onVersionChange }: Props) {
         name={card.name}
         front={front}
         back={back}
+        eager={eager}
       />
 
       <div className="flex min-w-0 items-baseline gap-1.5">
@@ -82,6 +92,7 @@ function CardFrame({
   name,
   front,
   back,
+  eager,
 }: {
   twoFaced: boolean
   showBack: boolean
@@ -89,13 +100,16 @@ function CardFrame({
   name: string
   front?: string
   back?: string
+  eager: boolean
 }) {
   const face = (src: string | undefined, alt: string, isBack: boolean) =>
     src ? (
       <img
         src={src}
         alt={alt}
-        loading="lazy"
+        loading={eager ? 'eager' : 'lazy'}
+        // Above the fold these are the main content, so ask for them ahead of anything else.
+        fetchPriority={eager ? 'high' : 'auto'}
         decoding="async"
         crossOrigin="anonymous"
         className="absolute inset-0 h-full w-full rounded-[4.5%] object-cover"
