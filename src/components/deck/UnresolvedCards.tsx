@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
 import type { DeckEntry } from '../../lib/deck/parseDeck'
 import type { ScryfallCard } from '../../lib/scryfall/types'
-import { RateLimitedError, searchByName } from '../../lib/scryfall/client'
+import { RateLimitedError, searchNameAndTokens, type NameSearch } from '../../lib/scryfall/client'
 import { pickerImage } from '../../lib/deck/slots'
 import { versionLabel } from './VersionPicker'
 
@@ -60,7 +60,8 @@ function UnresolvedRow({
   onResolve: (card: ScryfallCard) => void
   onDismiss: () => void
 }) {
-  const [results, setResults] = useState<ScryfallCard[] | null>(null)
+  const [results, setResults] = useState<NameSearch | null>(null)
+  const [tab, setTab] = useState<'cards' | 'tokens'>('cards')
   const [searching, setSearching] = useState(false)
   const [searchError, setSearchError] = useState<string>()
   const [expanded, setExpanded] = useState(true)
@@ -70,10 +71,14 @@ function UnresolvedRow({
     setSearching(true)
     setSearchError(undefined)
     try {
-      setResults(await searchByName(name))
+      const found = await searchNameAndTokens(name)
+      setResults(found)
+      // Land on whichever tab actually has something. A line reading "Treasure" has no card
+      // matches at all, and opening on an empty tab reads as a failed search.
+      setTab(found.cards.length ? 'cards' : 'tokens')
       setExpanded(true)
     } catch (err) {
-      setResults([])
+      setResults({ cards: [], tokens: [] })
       setSearchError(
         err instanceof RateLimitedError
           ? err.message
@@ -84,7 +89,15 @@ function UnresolvedRow({
     }
   }
 
-  const matches = results?.length ?? 0
+  const shown = results ? (tab === 'cards' ? results.cards : results.tokens) : []
+  const matches = shown.length
+  const total = results ? results.cards.length + results.tokens.length : 0
+  /**
+   * Whichever sides found something. With both there is a choice to make, with one there is
+   * only a label, but it is still worth showing: "Treasure" finds nothing but tokens, and
+   * without the word nothing says why the results look like tokens.
+   */
+  const available = (['cards', 'tokens'] as const).filter((w) => results?.[w].length)
 
   return (
     <li>
@@ -124,13 +137,47 @@ function UnresolvedRow({
 
       {searchError && <p className="mt-1 text-xs opacity-80">{searchError}</p>}
 
-      {!searchError && results && results.length === 0 && (
-        <p className="mt-1 text-xs opacity-70">No cards found for “{name}”.</p>
+      {!searchError && results && total === 0 && (
+        <p className="mt-1 text-xs opacity-70">No cards or tokens found for “{name}”.</p>
       )}
 
-      {results && results.length > 0 && expanded && (
-        <ul id={listId} className="mt-3 flex gap-3 overflow-x-auto pb-2">
-          {results.slice(0, 24).map((card) => {
+      {available.length > 0 && expanded && (
+        <div
+          role={available.length > 1 ? 'tablist' : undefined}
+          aria-label={available.length > 1 ? 'Result type' : undefined}
+          className="mt-2 flex gap-4"
+        >
+          {available.map((which) =>
+            available.length > 1 ? (
+              <button
+                key={which}
+                type="button"
+                role="tab"
+                aria-selected={tab === which}
+                aria-controls={listId}
+                onClick={() => setTab(which)}
+                className={`text-xs capitalize underline-offset-4 transition ${
+                  tab === which ? 'font-semibold underline' : 'opacity-60 hover:opacity-100'
+                }`}
+              >
+                {which} ({results?.[which].length})
+              </button>
+            ) : (
+              <span key={which} className="text-xs font-semibold capitalize">
+                {which} ({results?.[which].length})
+              </span>
+            ),
+          )}
+        </div>
+      )}
+
+      {matches > 0 && expanded && (
+        <ul
+          id={listId}
+          role={available.length > 1 ? 'tabpanel' : undefined}
+          className="mt-3 flex gap-3 overflow-x-auto pb-2"
+        >
+          {shown.slice(0, 24).map((card) => {
             const src = pickerImage(card)
             return (
               <li key={card.id} className="shrink-0">

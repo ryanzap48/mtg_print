@@ -1,6 +1,8 @@
 import type { DeckEntry } from '../deck/parseDeck'
 import type { CardIdentifier, ScryfallCard } from './types'
 import { cardKey, getCachedCard, getCachedPrints, putCachedCard, putCachedPrints } from './cache'
+import { normalizeTokenName, resolveToken, searchTokens } from './tokens'
+import { pacedFetch } from './pace'
 
 const API = 'https://api.scryfall.com'
 /** Scryfall's documented cap for POST /cards/collection. */
@@ -132,6 +134,8 @@ export async function resolveDeck(
     if (i + CHUNK_CONCURRENCY < batches.length) await sleep(REQUEST_DELAY_MS)
   }
 
+  await recoverTokens(entries, byKey, unresolvedKeys, signal)
+
   const resolved: ResolvedEntry[] = []
   const unresolved: DeckEntry[] = []
   for (const entry of entries) {
@@ -140,6 +144,51 @@ export async function resolveDeck(
     else unresolved.push(entry)
   }
   return { resolved, unresolved }
+}
+
+/**
+ * Second look at name-only lines that found nothing, this time among tokens.
+ *
+ * A decklist can perfectly reasonably ask for `1 Treasure` or `2 Bird Token`, but tokens are
+ * "extras" to Scryfall and `POST /cards/collection` will not match one by name, so those lines
+ * come back empty from the batch above. Lines that named a set and collector number are left
+ * alone: those already resolve, tokens included.
+ */
+async function recoverTokens(
+  entries: DeckEntry[],
+  byKey: Map<string, ScryfallCard>,
+  unresolvedKeys: Set<string>,
+  signal: AbortSignal | undefined,
+): Promise<void> {
+  const groups = new Map<string, DeckEntry[]>()
+  for (const entry of entries) {
+    if (byKey.has(entry.key) && !unresolvedKeys.has(entry.key)) continue
+    if (entry.set && entry.collectorNumber) continue
+    const name = normalizeTokenName(entry.name).toLowerCase()
+    if (!name) continue
+    const group = groups.get(name)
+    if (group) group.push(entry)
+    else groups.set(name, [entry])
+  }
+  if (!groups.size) return
+
+  const pending = [...groups.values()]
+  const CONCURRENCY = 3
+  for (let i = 0; i < pending.length; i += CONCURRENCY) {
+    await Promise.all(
+      pending.slice(i, i + CONCURRENCY).map(async (group) => {
+        signal?.throwIfAborted()
+        const token = await resolveToken(group[0]!.name)
+        if (!token) return
+        await putCachedCard(cardKey(token.set, token.collector_number), token)
+        for (const entry of group) {
+          byKey.set(entry.key, token)
+          unresolvedKeys.delete(entry.key)
+        }
+      }),
+    )
+    if (i + CONCURRENCY < pending.length) await sleep(REQUEST_DELAY_MS)
+  }
 }
 
 /**
@@ -240,13 +289,11 @@ export async function searchByName(name: string): Promise<ScryfallCard[]> {
   const exact = await runSearch(`!"${typed.replace(/"/g, '')}"`)
   if (exact.length) return exact.slice(0, MAX_SUGGESTIONS)
 
-  await sleep(REQUEST_DELAY_MS)
   const substring = await runSearch(typed)
   if (substring.length) return rankBySimilarity(substring, typed).slice(0, MAX_SUGGESTIONS)
 
   // A misspelling: gather anything plausible, then rank it.
   const candidates: ScryfallCard[] = []
-  await sleep(REQUEST_DELAY_MS)
   const guess = await fuzzyNamed(typed)
   if (guess) candidates.push(guess)
 
@@ -255,15 +302,43 @@ export async function searchByName(name: string): Promise<ScryfallCard[]> {
     .filter((w) => w.length >= 3)
     .sort((a, b) => b.length - a.length)[0]
   if (longest) {
-    await sleep(REQUEST_DELAY_MS)
     candidates.push(...(await runSearch(longest)))
   }
 
   return rankBySimilarity(dedupeByName(candidates), typed).slice(0, MAX_SUGGESTIONS)
 }
 
+export interface NameSearch {
+  cards: ScryfallCard[]
+  tokens: ScryfallCard[]
+}
+
+/**
+ * What someone might have meant, split into cards and tokens.
+ *
+ * The two are kept apart rather than merged into one ranked list because they answer different
+ * questions: "Bird" is both a handful of real cards and a token, and mixing them buries
+ * whichever one was wanted. Tokens live outside ordinary search, so they are looked up
+ * separately, and a failure there is not allowed to lose the card results.
+ */
+export async function searchNameAndTokens(name: string): Promise<NameSearch> {
+  const [cards, tokens] = await Promise.allSettled([searchByName(name), searchTokens(name)])
+
+  // Half an answer beats none: if one side was rate limited but the other came back, show what
+  // there is. Only when both fail is there nothing to say, and then the card search's error is
+  // the one worth reporting.
+  if (cards.status === 'rejected' && tokens.status !== 'fulfilled') throw cards.reason
+  return {
+    cards: cards.status === 'fulfilled' ? cards.value : [],
+    tokens:
+      tokens.status === 'fulfilled'
+        ? dedupeByName(tokens.value).slice(0, MAX_SUGGESTIONS)
+        : [],
+  }
+}
+
 async function runSearch(query: string): Promise<ScryfallCard[]> {
-  const res = await fetch(
+  const res = await pacedFetch(
     `${API}/cards/search?q=${encodeURIComponent(query)}&unique=cards&order=name`,
     { headers: JSON_HEADERS },
   )
@@ -277,7 +352,7 @@ async function runSearch(query: string): Promise<ScryfallCard[]> {
 
 /** Scryfall's spelling-tolerant single-card lookup. Ambiguous or unknown names give nothing. */
 async function fuzzyNamed(name: string): Promise<ScryfallCard | null> {
-  const res = await fetch(`${API}/cards/named?fuzzy=${encodeURIComponent(name)}`, {
+  const res = await pacedFetch(`${API}/cards/named?fuzzy=${encodeURIComponent(name)}`, {
     headers: JSON_HEADERS,
   })
   if (res.status === 429) throw new RateLimitedError()

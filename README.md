@@ -86,8 +86,9 @@ in `src/App.tsx`.
 
 ### Before you publish
 
-Replace `YOUR_CONTACT_EMAIL` in `src/components/layout/ArticleLayout.tsx` with a real address — GDPR
-expects a reachable data-controller contact — and review the `LAST_UPDATED` date.
+`CONTACT_EMAIL` in `src/components/layout/ArticleLayout.tsx` is the address shown on the legal
+pages, and GDPR expects it to be a reachable data-controller contact. Review the `LAST_UPDATED`
+date there too.
 
 There is no backend. Both `api.scryfall.com` and the image CDN `cards.scryfall.io` send
 `access-control-allow-origin: *`, so everything — lookup, art, and PDF assembly — happens in the
@@ -112,6 +113,37 @@ MTG Arena / Moxfield exports, one card per line:
 - `*F*` marks a foil. Foiling does not change the artwork, so it never changes the image; it only
   preselects a foil printing where one exists.
 - `Deck` / `Sideboard` / `Commander` headers, `//` comments, and Arena's `About` block are skipped.
+
+### Tokens
+
+Tokens can be listed by name, with or without the word people naturally add:
+
+```
+1 Treasure
+2 Bird Token
+4 Soldier
+```
+
+Tokens are "extras" to Scryfall and are missing from every search result unless
+`include_extras=true` is passed, which is why a plain lookup for `Treasure` finds nothing at all.
+`POST /cards/collection` does not match them by name either, so any line with no set and
+collector number that the batch cannot resolve gets a second pass through `lib/scryfall/tokens.ts`.
+That pass also prefers a plain one-sided token over a two-sided one carrying the same name on its
+back: asked for `Treasure`, Scryfall's own name match returns `Dinosaur // Treasure`.
+
+Lines that *do* give a set and collector number, such as `1 Treasure (THOB) 12`, already resolve
+through the ordinary batch and are left alone. Tokens have a `prints_search_uri` like any card,
+so the version dropdown works on them too.
+
+Misspelt token names cannot be recovered through the API: `/cards/named?fuzzy=` ignores extras
+entirely, and a substring search has nothing to match. So the ~810 distinct token names are paged
+out of search once, kept in `localStorage` for a week, and matched locally. The distance measure
+counts a swap of two neighbouring letters as one mistake, which is what recovers `Brid` → `Bird`,
+and a candidate has to be genuinely close to appear at all, so a misspelt *card* like `Sol Rng`
+offers no tokens rather than the least-distant of eight hundred unrelated ones.
+
+In the search results for a line that would not resolve, cards and tokens are kept in separate
+tabs: `Bird` is both several real cards and a token, and merging them buries whichever was meant.
 
 ## How cards become pages
 
@@ -165,6 +197,14 @@ Scryfall's `png` image is 744 × 1040 px, which is exactly 300 DPI at that size 
 - The app deliberately does **not** set a `User-Agent` header — browsers forbid it, and Scryfall's
   CORS policy is fully open. (Calling the API from Node *does* require one; Scryfall rejects
   undici's default UA with a 400.)
+- Every search goes through `lib/scryfall/pace.ts`, which spaces requests **across all callers**
+  rather than within each one. A card search and a token search run concurrently and know nothing
+  about each other, so two individually polite chains still interleave into an impolite burst.
+  Only each request's *start* is held back, so calls still overlap in flight. Measured against the
+  live API, a sustained 8 req/s earns a 429 and the penalty is a flat minute-long ban rather than
+  a brief pause, so the gap is 300 ms rather than the documented 50–100 ms; a search is one or two
+  requests, so this is invisible in use. A 429 is retried once if `Retry-After` is short, and it
+  pushes back everything still queued behind it.
 - The PDF is assembled in a Web Worker (`src/workers/pdf.worker.ts`) so a ~100 MB download-decode-
   re-encode pass never blocks the UI. Each unique image is embedded once and drawn N times, so
   file size scales with distinct art rather than card count.
@@ -191,7 +231,7 @@ src/
     usePersistentState.ts      useState mirrored into localStorage
   lib/
     deck/                      parseDeck.ts, slots.ts
-    scryfall/                  client.ts, cache.ts, types.ts
+    scryfall/                  client.ts, tokens.ts, pace.ts, cache.ts, types.ts
     print/                     geometry.ts, sheet.ts, exportPdf.ts, types.ts
     analytics.ts
   workers/pdf.worker.ts
