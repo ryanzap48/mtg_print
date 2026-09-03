@@ -10,6 +10,13 @@ import { FAQS } from '../../content/home'
  */
 
 const SITE_NAME = 'MTG Print Proxy'
+/**
+ * Bumped when the tool's described behaviour changes, not on every deploy.
+ *
+ * `dateModified` is a freshness signal, and a date that moves on every rebuild while the page
+ * says the same thing is the kind of claim Google learns to discount.
+ */
+const UPDATED = '2026-09-03'
 
 function siteUrl(): string {
   const configured = import.meta.env.VITE_SITE_URL?.replace(/\/+$/, '')
@@ -44,6 +51,27 @@ export function HomeJsonLd() {
           inLanguage: 'en',
           description:
             'A free tool that turns a Magic: The Gathering decklist into a print-ready proxy PDF at true card size.',
+          publisher: { '@id': `${base}/#publisher` },
+        },
+        {
+          // Names the thing behind the site, which is what lets a search engine or an assistant
+          // treat these pages as one entity rather than as unrelated URLs.
+          '@type': 'Organization',
+          '@id': `${base}/#publisher`,
+          name: SITE_NAME,
+          url: `${base}/`,
+          logo: { '@type': 'ImageObject', url: `${base}/icon-512.png`, width: 512, height: 512 },
+        },
+        {
+          '@type': 'WebPage',
+          '@id': `${base}/#webpage`,
+          url: `${base}/`,
+          name: 'Print Magic proxies at true card size',
+          isPartOf: { '@id': `${base}/#website` },
+          about: { '@id': `${base}/#app` },
+          dateModified: UPDATED,
+          inLanguage: 'en',
+          primaryImageOfPage: { '@type': 'ImageObject', url: `${base}/og-image.png` },
         },
         {
           '@type': 'WebApplication',

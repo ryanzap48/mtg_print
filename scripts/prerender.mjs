@@ -87,10 +87,11 @@ function headFor(route) {
     `<title>${escape(route.title)}</title>`,
     `<meta name="description" content="${escape(route.description)}" />`,
   ]
-  if (url) tags.push(`<link rel="canonical" href="${escape(url)}" />`)
   // Confirmation pages and 404s are reachable but are not destinations to rank. "follow" still
-  // lets link equity flow through them.
+  // lets link equity flow through them. Google asks that noindex and canonical are not combined,
+  // the two instructions conflict and it may honour whichever it likes, so only one is emitted.
   if (route.noindex) tags.push(`<meta name="robots" content="noindex, follow" />`)
+  else if (url) tags.push(`<link rel="canonical" href="${escape(url)}" />`)
   tags.push(
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="${escape(SITE_NAME)}" />`,
@@ -137,8 +138,29 @@ for (const route of routes) {
   count++
 }
 
+/**
+ * A real 404 page, so a wrong URL is answered with a 404 status rather than the home page.
+ *
+ * Every route above is now a static file, which means the host's catch-all is only ever reached
+ * by a URL that genuinely does not exist. Serving index.html with a 200 for those is a "soft
+ * 404": Google reports them as errors, and can index junk URLs under the home page's title.
+ * Both host configs point their fallback at this file.
+ */
+const notFound = {
+  path: '/404',
+  title: 'Page not found | MTG Print Proxy',
+  description: 'That page does not exist on MTG Print Proxy.',
+  noindex: true,
+}
+writeFileSync(
+  resolve(DIST, '404.html'),
+  template
+    .replace(/<!--seo:start-->[\s\S]*<!--seo:end-->/, `<!--seo:start-->\n${headFor(notFound)}\n    <!--seo:end-->`)
+    .replace('<div id="root"></div>', `<div id="root">${renderRoute('/404')}</div>`),
+)
+
 rmSync(SSR_DIR, { recursive: true, force: true })
-console.log(`  ✓ prerendered ${count} routes with per-route metadata`)
+console.log(`  ✓ prerendered ${count} routes with per-route metadata, plus 404.html`)
 if (!SITE_URL) {
   console.warn('    ! SITE_URL is unset, so canonical, og:url and og:image were left out.')
 }

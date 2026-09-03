@@ -14,11 +14,13 @@ npm run build    # static site in dist/
 npm run preview  # serve the built output
 ```
 
-A single-page app with real client-side routes: `/`, `/about`, `/privacy`, `/terms`, `/legal`.
+A single-page app with real client-side routes: `/`, `/about`, `/privacy`, `/terms`, `/legal`,
+`/feedback`.
 
-Because those are routes rather than files, the host must serve `index.html` for any unknown
-path. Both configs are committed: `vercel.json` (Vercel) and `public/_redirects`
-(Netlify / Cloudflare Pages / Render static sites). Without one of them, deep links 404.
+Every route is **prerendered to its own HTML file** at build time, so deep links are served as
+real files and need no rewrite rule. The committed host configs — `vercel.json` and
+`public/_redirects` — exist to point unknown URLs at `404.html` with a 404 status, not to
+provide an SPA fallback. See [A wrong URL returns a real 404](#a-wrong-url-returns-a-real-404).
 
 Build output is foldered and named: `assets/js/vendor-react-<hash>.js`,
 `assets/css/index-<hash>.css`, and so on. The `<hash>` is deliberate — it is what lets these
@@ -65,6 +67,36 @@ an empty `<div id="root">`.
 Metadata comes from `site-routes.json`, the same file the nav and sitemap are built from. To add
 a page, add it there and to `src/App.tsx`: nav, footer, sitemap, prerender and metadata all
 follow.
+
+### A wrong URL returns a real 404
+
+Because every route is now a static file, the host's catch-all is only reached by a URL that
+genuinely does not exist, so it points at `404.html` with a **404 status** rather than serving
+the app shell with a 200. A 200 there is a "soft 404": Google reports it as an error and can
+index junk URLs under the home page's title.
+
+- Netlify / Cloudflare / Render: `public/_redirects` → `/*  /404.html  404`
+- Vercel: `vercel.json` has **no** catch-all rewrite any more, plus `cleanUrls`. Vercel serves
+  `404.html` for unmatched paths on its own.
+
+Client-side navigation is unaffected; the router never asks the server for a route. **A route
+added to `src/AppRoutes.tsx` but not to `site-routes.json` is not prerendered, so visiting it
+directly would 404.** Add new routes to both.
+
+`vite preview` has its own SPA fallback and ignores both config files, so it always answers 200.
+Confirm the real behaviour after deploying:
+
+```bash
+curl -o /dev/null -w '%{http_code}\n' https://your-domain.com/does-not-exist   # expect 404
+curl -o /dev/null -w '%{http_code}\n' https://your-domain.com/about            # expect 200
+```
+
+### Caching
+
+`public/_headers` (Netlify/Cloudflare) and the `headers` block in `vercel.json` cache hashed
+`assets/*` immutably for a year — safe precisely because a change to a file changes its URL —
+while HTML is revalidated every time so a deploy reaches people holding an old copy. Repeat-visit
+speed feeds Core Web Vitals, which is a ranking signal.
 
 ### Structured data
 

@@ -1,2 +1,12 @@
-# SPA fallback for Netlify / Cloudflare Pages / Render static sites.
-/*  /index.html  200
+# Netlify / Cloudflare Pages / Render static sites.
+#
+# Every real route is prerendered to its own HTML file, so this catch-all is only reached by a
+# URL that does not exist. It therefore answers 404 rather than 200: serving the app shell with
+# a 200 for an unknown URL is a "soft 404", which Google reports as an error and which lets junk
+# URLs get indexed under the home page's title.
+#
+# Client-side navigation is unaffected, the router never asks the server for a route.
+#
+# NOTE: a route added to src/AppRoutes.tsx but not to site-routes.json is not prerendered, so a
+# direct visit to it would land here and 404. Add new routes to both.
+/*  /404.html  404

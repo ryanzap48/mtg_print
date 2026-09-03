@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { FAQS, STEPS } from '../../content/home'
 
 /**
@@ -47,6 +48,20 @@ export function HomeGuide() {
             </div>
           ))}
         </dl>
+
+        {/* Descriptive anchor text rather than "click here": these are the only in-content links
+            on the site, and they are what tells a search engine what the linked page is about. */}
+        <p className="mt-8 text-sm" style={{ color: 'var(--text-muted)' }}>
+          More detail on{' '}
+          <Link to="/about" className="underline underline-offset-4 hover:opacity-60">
+            how the proxy PDF is put together
+          </Link>
+          , and on{' '}
+          <Link to="/legal" className="underline underline-offset-4 hover:opacity-60">
+            where printed proxies are and are not allowed
+          </Link>
+          .
+        </p>
       </section>
     </div>
   )
