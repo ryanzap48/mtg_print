@@ -24,30 +24,98 @@ Build output is foldered and named: `assets/js/vendor-react-<hash>.js`,
 `assets/css/index-<hash>.css`, and so on. The `<hash>` is deliberate — it is what lets these
 files be cached indefinitely while still updating the instant their contents change.
 
-## SEO: robots.txt and sitemap.xml
+## SEO and AI search
 
-Both are **generated at build time** into `dist/`, from `site-routes.json` — the same file the
-nav is built from, so the sitemap can never list a page that no longer exists. Set your domain:
+Set your domain once:
 
 ```
 SITE_URL=https://your-real-domain.com
 ```
 
-in `.env` (or your host's environment variables — a real env var overrides `.env`). Then:
+in `.env` (or your host's environment variables — a real env var overrides `.env`). It drives
+the sitemap, `robots.txt`, `llms.txt`, and every absolute URL in the HTML: canonicals, `og:url`,
+`og:image` and the `@id`s in the structured data. `vite.config.ts` mirrors it into
+`VITE_SITE_URL` so the app bundle sees the same value; it is the only place the domain is set.
 
 ```bash
 npm run build
-#   ✓ dist/sitemap.xml  5 URLs, lastmod 2026-08-19
-#   ✓ dist/robots.txt
-#   → Submit to Google Search Console: https://your-real-domain.com/sitemap.xml
+#   ✓ prerendered 7 routes with per-route metadata
+#   ✓ dist/sitemap.xml  6 URLs, lastmod 2026-09-03
+#   ✓ dist/robots.txt   16 AI crawlers allowed explicitly
+#   ✓ dist/llms.txt     10 Q&As for language models
 ```
 
-If `SITE_URL` is unset or still the placeholder, the build prints a warning and writes neither
-file — a sitemap full of `your-domain.com` URLs is worse than no sitemap. A malformed value
-fails the build.
+If `SITE_URL` is unset or still the placeholder the build says so and writes no SEO files — a
+sitemap full of `your-domain.com` URLs is worse than no sitemap. A malformed value fails the
+build.
 
-To add a page, add it to `site-routes.json` and `src/App.tsx`; it appears in the nav, the footer,
-and the sitemap automatically.
+### Every route ships as real HTML, with its own metadata
+
+`scripts/prerender.mjs` renders each route to static HTML and rewrites the block between
+`<!--seo:start-->` and `<!--seo:end-->` in `index.html` with that route's title, description,
+canonical, og/twitter tags and `robots`. **Editing those tags in `index.html` only affects
+`npm run dev`** — the build replaces the whole block.
+
+This existed to fix two things that are invisible unless you look at what a crawler is served:
+copying `index.html` to every route shipped the *home page's* title on `/about`, `/privacy`,
+`/terms` and `/legal`, so the site looked like five duplicates of one page; and no page had a
+canonical URL at all. The home route is prerendered too, so the most important page is no longer
+an empty `<div id="root">`.
+
+Metadata comes from `site-routes.json`, the same file the nav and sitemap are built from. To add
+a page, add it there and to `src/App.tsx`: nav, footer, sitemap, prerender and metadata all
+follow.
+
+### Structured data
+
+`src/components/seo/JsonLd.tsx` renders JSON-LD **into the React tree**, so the prerenderer bakes
+it into the static HTML for free. The home page declares `WebSite`, `WebApplication` (free, with
+its feature list) and `FAQPage`; prose pages declare a `BreadcrumbList`.
+
+The FAQ text lives in `src/content/home.json` and is the single source for the visible page, the
+`FAQPage` markup and `llms.txt`. That is deliberate: marking up answers a visitor cannot see is
+cloaking, and drift between the two is the usual way FAQ markup gets a site penalised.
+
+### Written for AI answers too
+
+- **Prerendered HTML.** The crawlers behind AI answers largely do not execute JavaScript, so a
+  client-rendered page is invisible to them. This is the single biggest factor.
+- **`robots.txt` names 16 AI crawlers explicitly.** `User-agent: *` already allows them, so the
+  named blocks are not what grants access — robots.txt gives a named block priority over the
+  wildcard, so anyone later adding a `Disallow` under `*` will not silently cut off AI search as
+  a side effect. `Google-Extended` and `Applebot-Extended` grant nothing on their own; they only
+  govern training and grounding use, and omitting them reads as opting out.
+- **`llms.txt`**, a plain-Markdown summary of the site and its Q&As. A proposed convention rather
+  than a ratified standard, but it costs one generated file.
+- **Answers written to stand alone.** Each FAQ answer is quotable without the surrounding page,
+  and states specifics (63 × 88 mm, 744 × 1040 px, 300 DPI, nine per page) rather than adjectives.
+
+## Icons
+
+The favicon used to be an inline `data:` URI, which browser tabs accept but nothing else does:
+Safari's start page, the iOS home screen and Android all ignored it and fell back to a grey
+letter tile. They want real files at real URLs, so `icons/icon-square.svg` is rasterised into:
+
+| File | Used by |
+| --- | --- |
+| `favicon.ico` (16+32+48) | anything that requests `/favicon.ico` blindly |
+| `favicon.svg` | browser tabs, scales to any density |
+| `apple-touch-icon.png` (180) | iOS home screen, **Safari start page tiles** |
+| `icon-192.png`, `icon-512.png` | Android home screen and PWA install, via `site.webmanifest` |
+| `og-image.png` (1200×630) | link previews in Messages, Slack, X, Facebook, LinkedIn |
+
+The source is deliberately full bleed with square corners: every platform applies its own
+rounding, and an icon that rounds itself first ends up with a dark notch inside each corner.
+
+```bash
+brew install librsvg   # once
+npm run icons          # after editing icons/icon-square.svg
+```
+
+Not part of `npm run build`: it needs `rsvg-convert`, which a deploy host will not have. The
+generated files are committed.
+
+`theme-color` is `#1c1917` to match the nav bar, which is what sits under Safari's toolbar.
 
 ## Analytics (optional, off by default)
 

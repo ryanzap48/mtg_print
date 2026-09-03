@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { INFO_PAGES } from './navigation'
+import { BreadcrumbJsonLd } from '../seo/JsonLd'
 
-/** Fill this in before publishing, GDPR expects a reachable controller contact. */
+/** GDPR expects a reachable controller contact; this is shown on the legal pages. */
 export const CONTACT_EMAIL = 'zapps4848@gmail.com'
 export const LAST_UPDATED = '20 August 2026'
 
@@ -11,8 +12,10 @@ export const LAST_UPDATED = '20 August 2026'
  * contents stay left-aligned, centred multi-line prose is hard to read.
  */
 export function ArticleLayout({ title, children }: { title: string; children: ReactNode }) {
+  const { pathname } = useLocation()
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10">
+      <BreadcrumbJsonLd label={title} path={pathname} />
       <nav
         className="mb-8 flex flex-wrap gap-x-5 gap-y-2 pb-4 text-sm"
         style={{ borderBottom: '1px solid var(--border)' }}

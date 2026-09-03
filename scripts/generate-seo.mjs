@@ -80,16 +80,89 @@ ${routes
 </urlset>
 `
 
+/**
+ * Crawlers that read pages to answer questions, and the two tokens that govern whether a site
+ * may be used to ground AI answers at all.
+ *
+ * `User-agent: *` already allows every one of these, so the named blocks are not what grants
+ * access. They are here because robots.txt gives a named block priority over the wildcard: once
+ * one exists, that crawler reads only its own rules, so anyone later adding a `Disallow` under
+ * `*` will not silently cut off AI search as a side effect. Google-Extended and
+ * Applebot-Extended grant nothing on their own, they only control training and grounding use,
+ * and omitting them is read as opting out.
+ */
+const AI_AGENTS = [
+  'GPTBot',
+  'OAI-SearchBot',
+  'ChatGPT-User',
+  'ClaudeBot',
+  'Claude-User',
+  'Claude-SearchBot',
+  'PerplexityBot',
+  'Perplexity-User',
+  'Google-Extended',
+  'Applebot-Extended',
+  'Bingbot',
+  'DuckAssistBot',
+  'meta-externalagent',
+  'Amazonbot',
+  'cohere-ai',
+  'CCBot',
+]
+
 const robots = `# https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
 
+# Assistants and AI search are welcome to read and cite this site.
+${AI_AGENTS.map((a) => `User-agent: ${a}`).join('\n')}
+Allow: /
+
+# A plain-text summary written for language models: ${siteUrl}/llms.txt
+
 Sitemap: ${siteUrl}/sitemap.xml
+`
+
+/**
+ * llms.txt, a plain-Markdown summary of the site for language models.
+ *
+ * A proposed convention rather than a ratified standard, but it costs one generated file and it
+ * is the only artefact here that states, in prose an assistant can quote directly, what the tool
+ * does and what its answers are. Built from the same sources as the page and the sitemap.
+ */
+const home = JSON.parse(readFileSync(resolve(ROOT, 'src/content/home.json'), 'utf8'))
+const llms = `# MTG Print Proxy
+
+> ${home.tagline}
+
+MTG Print Proxy is a free, browser-based tool that turns a Magic: The Gathering decklist into a
+print-ready PDF. Cards are laid out at their true physical size of 63 × 88 mm, nine to a page on
+US Letter or A4 and sixteen on Tabloid or A3. Card data and artwork come from the Scryfall API.
+There is no server and no account: decklists stay in the browser and the PDF is assembled on the
+visitor's own device.
+
+Not affiliated with, endorsed by, or derived from Wizards of the Coast, Scryfall, or any other
+proxy-printing service. Printed proxies are for casual playtesting only and are not legal in
+sanctioned tournaments.
+
+## Pages
+
+${routes.map((r) => `- [${r.label}](${siteUrl}${r.path}): ${r.description}`).join('\n')}
+
+## How it works
+
+${home.steps.map((s, i) => `${i + 1}. **${s.title}** ${s.body}`).join('\n')}
+
+## Frequently asked questions
+
+${home.faqs.map((f) => `### ${f.q}\n\n${f.a}`).join('\n\n')}
 `
 
 writeFileSync(resolve(DIST, 'sitemap.xml'), sitemap)
 writeFileSync(resolve(DIST, 'robots.txt'), robots)
+writeFileSync(resolve(DIST, 'llms.txt'), llms)
 
 console.log(`\n  ✓ dist/sitemap.xml  ${routes.length} URLs, lastmod ${lastmod}`)
-console.log(`  ✓ dist/robots.txt`)
+console.log(`  ✓ dist/robots.txt   ${AI_AGENTS.length} AI crawlers allowed explicitly`)
+console.log(`  ✓ dist/llms.txt     ${home.faqs.length} Q&As for language models`)
 console.log(`  → Submit to Google Search Console: ${siteUrl}/sitemap.xml\n`)

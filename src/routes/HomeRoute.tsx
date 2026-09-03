@@ -21,6 +21,9 @@ import {
 } from '../lib/print/exportPdf'
 import { DEFAULT_PRINT_OPTIONS, type PrintOptions } from '../lib/print/types'
 import { useDeckSession } from '../state/DeckSession'
+import { HomeIntro } from '../components/home/HomeIntro'
+import { HomeGuide } from '../components/home/HomeGuide'
+import { HomeJsonLd } from '../components/seo/JsonLd'
 
 const OPTIONS_STORAGE_KEY = 'mtg-print:options'
 /** Sections left out when "skip sideboard" is on. Commander entries always print. */
@@ -107,6 +110,7 @@ export function HomeRoute() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
+      <HomeIntro />
       <DeckInput
         value={text}
         onChange={setText}
@@ -177,6 +181,11 @@ export function HomeRoute() {
         />
       )}
 
+      {/* Hidden once a deck is on screen: at that point you are working, not reading the
+          introduction. Placed above the dialogs so the page's actual prose comes before their
+          markup, which is inert until opened but would otherwise sit in the middle of it. */}
+      {!hasResults && <HomeGuide />}
+
       <ShareDialog
         open={shareOpen}
         onClose={() => setShareOpen(false)}
@@ -208,6 +217,8 @@ export function HomeRoute() {
           }
         }}
       />
+
+      <HomeJsonLd />
     </main>
   )
 }

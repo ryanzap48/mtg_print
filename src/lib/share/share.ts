@@ -14,7 +14,10 @@ const SHARE_TEXT = 'Print your Magic decks at true card size with MTG Print Prox
 
 export function siteUrl(): string {
   const configured = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/+$/, '')
-  return configured || window.location.origin
+  if (configured) return configured
+  // There is no origin while prerendering, and share links are only ever followed in a browser
+  // anyway, so an empty base is correct rather than merely safe.
+  return typeof window === 'undefined' ? '' : window.location.origin
 }
 
 export function toPdfFile(blob: Blob, filename: string): File {

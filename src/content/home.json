@@ -1,0 +1,59 @@
+{
+  "tagline": "Paste a Magic: The Gathering decklist and download a print-ready PDF with the cards at true size, 63 × 88 mm. Free, no account, and it all happens in your browser.",
+  "steps": [
+    {
+      "title": "Paste your decklist",
+      "body": "Any MTG Arena or Moxfield export works, as does a plain list like “4 Lightning Bolt”. Set codes and collector numbers are honoured when you include them, so a specific printing stays the one you asked for."
+    },
+    {
+      "title": "Pick the printings you want",
+      "body": "Every card gets a dropdown listing each printing Scryfall has, with the set, collector number and artwork. Swap in a borderless or retro frame, or leave it as it came."
+    },
+    {
+      "title": "Download the PDF and print at 100%",
+      "body": "Nine cards to a page on US Letter or A4, sixteen on Tabloid or A3, with optional crop marks. Print at “Actual size”, never “Fit to page”, and the cards come out sleeve-ready."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Is MTG Print Proxy free?",
+      "a": "Yes. It is free with no account, no sign-up and no limit on how many cards or decks you print. There is no paid tier."
+    },
+    {
+      "q": "What size are the printed cards?",
+      "a": "Exactly 63 × 88 mm, the real size of a Magic: The Gathering card. Scryfall’s PNG images are 744 × 1040 pixels, which is precisely 300 DPI at that size, so artwork is never upscaled. Cut cards fit standard sleeves."
+    },
+    {
+      "q": "How many cards fit on one page?",
+      "a": "Nine, in a 3 × 3 grid, on both US Letter and A4. Tabloid and A3 fit sixteen. US Legal and A5 are also supported."
+    },
+    {
+      "q": "How do I print at the correct size?",
+      "a": "In your printer dialog choose “Actual size” or 100% scale. Never choose “Fit to page”, which silently shrinks the sheet and leaves cards too small for sleeves. There is a built-in calibration sheet you can print first to check your printer."
+    },
+    {
+      "q": "What decklist formats are supported?",
+      "a": "MTG Arena and Moxfield exports, and plain lists. A line can be as simple as “1 Sol Ring” or as specific as “1 Esper Sentinel (PLST) MH2-12”. Quantities like “4x” work, foil markers are recognised, and Deck, Sideboard and Commander headers are handled."
+    },
+    {
+      "q": "Can I choose a specific printing or artwork?",
+      "a": "Yes. Each card has a dropdown listing every printing Scryfall knows about, identified by set name, set code and collector number, so you can pick a particular frame, art treatment or promo."
+    },
+    {
+      "q": "Are double-faced cards handled correctly?",
+      "a": "Yes. A card with a genuine printed back, such as a transforming or modal double-faced card, prints both faces in adjacent slots. Cards that merely have two names, including adventures, sagas and split cards, correctly stay a single card."
+    },
+    {
+      "q": "Can I print tokens?",
+      "a": "Yes. Write the token by name, such as “1 Treasure”, “2 Bird Token” or “4 Soldier”, and it resolves like any other card, with the same choice of printings."
+    },
+    {
+      "q": "Is my decklist uploaded anywhere?",
+      "a": "No. There is no server and no account. Your decklist stays in your browser, and the PDF is assembled on your own device. The only outside requests are to Scryfall for card data and artwork."
+    },
+    {
+      "q": "Can I use printed proxies in tournaments?",
+      "a": "No. The Magic Tournament Rules require Authorized Game Cards, meaning genuine cards published by Wizards of the Coast, so proxies are not allowed in sanctioned events. Only a Head Judge may issue a proxy, and only for a card damaged during that tournament. Casual playtesting, cubes and Commander pods are up to your group, so ask first."
+    }
+  ]
+}

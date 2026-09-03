@@ -1,0 +1,25 @@
+<!--
+  Source for the 1200x630 link preview image (public/og-image.png).
+
+  Text is drawn as real SVG text in a system-ish font stack; rsvg-convert resolves it against
+  the fonts installed on the machine that runs `npm run icons`, so the committed PNG is what
+  ships, not this file. Run `npm run icons` after editing.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#ffffff"/>
+
+  <!-- The same two overlapping cards as the app icon, enlarged. -->
+  <g transform="translate(96 150)">
+    <rect x="0" y="0" width="150" height="208" rx="14" fill="#ffffff" stroke="#171717" stroke-width="7"/>
+    <rect x="58" y="36" width="150" height="208" rx="14" fill="#e8823c" stroke="#171717" stroke-width="7"/>
+  </g>
+
+  <g fill="#171717" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="392" y="248" font-size="66" font-weight="700" letter-spacing="-1.5">MTG Print Proxy</text>
+    <text x="392" y="330" font-size="37" fill="#525252">Paste a decklist, download a</text>
+    <text x="392" y="380" font-size="37" fill="#525252">print-ready PDF at true card size.</text>
+    <text x="392" y="462" font-size="31" font-weight="700" fill="#e8823c">63 × 88 mm  ·  9 per page  ·  free</text>
+  </g>
+
+  <rect x="0" y="606" width="1200" height="24" fill="#171717"/>
+</svg>

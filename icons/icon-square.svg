@@ -1,0 +1,12 @@
+<!--
+  Source for every raster icon. Deliberately full bleed with square corners: iOS, Android and
+  Safari's start page all apply their own rounding, and an icon that rounds itself first ends up
+  with a visible dark notch inside each corner.
+
+  Run `npm run icons` after editing.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <rect width="180" height="180" fill="#111111"/>
+  <rect x="39" y="31" width="73" height="101" rx="11" fill="#ffffff"/>
+  <rect x="67" y="48" width="73" height="101" rx="11" fill="#e8823c" stroke="#111111" stroke-width="8"/>
+</svg>
