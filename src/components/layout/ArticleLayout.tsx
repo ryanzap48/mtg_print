@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link, NavLink, useLocation } from 'react-router-dom'
-import { INFO_PAGES } from './navigation'
+import { Link, useLocation } from 'react-router-dom'
 import { BreadcrumbJsonLd } from '../seo/JsonLd'
 
 /** GDPR expects a reachable controller contact; this is shown on the legal pages. */
@@ -16,24 +15,9 @@ export function ArticleLayout({ title, children }: { title: string; children: Re
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10">
       <BreadcrumbJsonLd label={title} path={pathname} />
-      <nav
-        className="mb-8 flex flex-wrap gap-x-5 gap-y-2 pb-4 text-sm"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
-        {INFO_PAGES.map(({ to, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              isActive ? 'font-semibold' : 'underline underline-offset-4 hover:opacity-60'
-            }
-            style={({ isActive }) => (isActive ? { color: 'var(--text)' } : undefined)}
-          >
-            {label}
-          </NavLink>
-        ))}
-      </nav>
-
+      {/* No sub-nav here. The header lists these same five pages on every page and the footer
+          lists them again, so a third copy made five duplicated anchors on each prose page,
+          which tells a search engine nothing and reads as repetition to a screen reader. */}
       <h1 className="mb-5 text-2xl font-semibold tracking-tight">{title}</h1>
       <div className="space-y-4 text-sm/7" style={{ color: 'var(--text-muted)' }}>
         {children}

@@ -12,8 +12,8 @@ export function HomeIntro() {
         Print Magic proxies at true card size
       </h1>
       <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-        Paste a decklist, pick the printings you want, and download a print-ready PDF at 63 × 88 mm.
-        Free, and it runs entirely in your browser.
+        Paste a decklist, pick the printings you want, and download a PDF laid out at the true size
+        of a Magic card, 63 × 88 mm. Free, and it runs entirely in your browser.
       </p>
     </div>
   )

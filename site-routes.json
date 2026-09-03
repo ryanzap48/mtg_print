@@ -5,8 +5,8 @@
     "inNav": false,
     "priority": "1.0",
     "changefreq": "monthly",
-    "title": "MTG Print Proxy | print Magic proxies at true card size",
-    "description": "Paste a Magic decklist and download a print-ready proxy PDF, 9 cards per page at true 63x88mm size. Choose any printing. Free, and runs in your browser."
+    "title": "MTG Print Proxy | Magic decklist to PDF at true card size",
+    "description": "Paste a Magic decklist and download a proxy PDF, 9 cards per page at true 63x88mm size. Choose any artwork. Free, and it all runs in your browser."
   },
   {
     "path": "/about",
@@ -15,7 +15,8 @@
     "priority": "0.6",
     "changefreq": "yearly",
     "title": "About | how the MTG proxy PDF generator works",
-    "description": "How MTG Print Proxy turns a decklist into a print-ready proxy sheet, how double-faced cards are handled, and why you must print at 100% scale."
+    "description": "How MTG Print Proxy turns a decklist into a print-ready proxy sheet, how double-faced cards are handled, and why you must print at 100% scale.",
+    "footerLabel": "About this tool"
   },
   {
     "path": "/privacy",
@@ -24,7 +25,8 @@
     "priority": "0.3",
     "changefreq": "yearly",
     "title": "Privacy Policy | MTG Print Proxy",
-    "description": "What MTG Print Proxy stores on your device, the optional analytics cookies you can decline, and how to withdraw consent. Decklists stay in your browser."
+    "description": "What MTG Print Proxy stores on your device, the optional analytics cookies you can decline, and how to withdraw consent. Decklists stay in your browser.",
+    "footerLabel": "Privacy policy"
   },
   {
     "path": "/terms",
@@ -33,7 +35,8 @@
     "priority": "0.3",
     "changefreq": "yearly",
     "title": "Terms of Service | MTG Print Proxy",
-    "description": "Terms of use for MTG Print Proxy: a free, non-commercial tool provided as is, for personal playtesting use only."
+    "description": "Terms of use for MTG Print Proxy: a free, non-commercial tool provided as is, for personal playtesting use only.",
+    "footerLabel": "Terms of service"
   },
   {
     "path": "/legal",
@@ -42,7 +45,8 @@
     "priority": "0.4",
     "changefreq": "yearly",
     "title": "Are MTG proxies legal? Tournament rules and limits",
-    "description": "Proxy rules for sanctioned play (MTR 3.3 and 3.4), personal-use limits, card image handling, and Wizards of the Coast Fan Content Policy notices."
+    "description": "Proxy rules for sanctioned play (MTR 3.3 and 3.4), personal-use limits, card image handling, and Wizards of the Coast Fan Content Policy notices.",
+    "footerLabel": "Legal notices"
   },
   {
     "path": "/feedback",
@@ -51,7 +55,8 @@
     "priority": "0.5",
     "changefreq": "yearly",
     "title": "Send feedback | MTG Print Proxy",
-    "description": "Report a card that will not resolve, a printing that looks wrong, or suggest an improvement to MTG Print Proxy."
+    "description": "Report a card that will not resolve, a printing that looks wrong, or suggest an improvement to MTG Print Proxy.",
+    "footerLabel": "Send feedback"
   },
   {
     "path": "/feedback/thanks",

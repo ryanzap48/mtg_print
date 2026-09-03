@@ -21,7 +21,7 @@
     },
     {
       "q": "What size are the printed cards?",
-      "a": "Exactly 63 × 88 mm, the real size of a Magic: The Gathering card. Scryfall’s PNG images are 744 × 1040 pixels, which is precisely 300 DPI at that size, so artwork is never upscaled. Cut cards fit standard sleeves."
+      "a": "Exactly 63 × 88 mm, the true size of a Magic: The Gathering card. Scryfall’s PNG images are 744 × 1040 pixels, which is precisely 300 DPI at that size, so artwork is never upscaled. Cut cards fit standard sleeves."
     },
     {
       "q": "How many cards fit on one page?",
